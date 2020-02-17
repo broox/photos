@@ -6,7 +6,7 @@ const sourcemaps = require('gulp-sourcemaps');
 const terser = require('gulp-terser');
 
 gulp.task('concatenate-css-libraries', () => {
-  return gulp.src('./app/static/css/lib/*.css')
+  return gulp.src(['./app/static/css/src/*.css', './app/static/css/lib/*.css'])
   .pipe(concat('lib.css'))
   .pipe(cleanCSS())
   .pipe(gulp.dest('./app/static/css'));
@@ -39,4 +39,16 @@ gulp.task('js', () => {
   .pipe(gulp.dest('./app/static/js'))
 });
 
+gulp.task('watch-client-files', () => {
+  gulp.watch([
+    './app/static/css/lib/*',
+    './app/static/css/src/*',
+    './app/static/js/lib/*',
+    './app/static/js/src/*'
+  ], () => {
+    gulp.run(['jslib', 'js']);
+  });
+});
+
 gulp.task('default', ['jslib', 'js']);
+gulp.task('watch', ['watch-client-files'])

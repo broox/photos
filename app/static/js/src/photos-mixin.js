@@ -85,7 +85,10 @@ const photosMixin = {
               rect = thumbnail.getBoundingClientRect(); 
 
           return {x:rect.left, y:rect.top + pageYScroll, w:rect.width};
-        }
+        },
+        shareButtons: [
+          { id:'download', label:'Download image', url:'{{raw_image_url}}', download:true }
+        ],
       };
 
       if( isNaN(options.index) ) {
