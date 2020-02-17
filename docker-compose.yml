@@ -2,7 +2,19 @@ version: '2'
 services:
   web:
     build: .  # use Dockerfile
+    environment:
+      - FLASK_ENV=production
+    expose:
+      - "5000"
     ports:
       - "5000:5000"
+    restart: always
     volumes:
       - ./app:/app
+    networks:
+      - default
+
+networks:
+  default:
+    external:
+      name: nginx-proxy

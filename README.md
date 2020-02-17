@@ -14,5 +14,5 @@ The backend-end is a lightweight python ([flask](https://github.com/pallets/flas
 ## Running:
 
 1. Run `docker-compose build`
-1. Run `docker-compose up`
+1. Run `docker-compose up` (or `docker-compose -f docker-compose-dev.yml up` when running locally)
 1. Hit `localhost:5000/
