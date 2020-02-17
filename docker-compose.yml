@@ -4,6 +4,10 @@ services:
     build: .  # use Dockerfile
     environment:
       - FLASK_ENV=production
+
+      - VIRTUAL_HOST=photos.broox.com
+      - LETSENCRYPT_HOST=photos.broox.com
+      - LETSENCRYPT_EMAIL=derek@broox.com
     expose:
       - "5000"
     ports:
