@@ -10,7 +10,7 @@ function serializeForPhotoSwipe(photo) {
     src: src,
     w: photo.width,
     h: photo.height,
-    msrc: photo.images.medium,
+    msrc: thumbnail,
     title: photo.description,
     thumbnail: thumbnail
   }
@@ -22,7 +22,8 @@ const photosMixin = {
     photos: [],
     offset: 0,
     limit: 20,
-    photoRowHeight: 200
+    photoRowHeight: 200,
+    searchTerm: null
   },
   created() {
     if (isLargeViewport()) {
@@ -31,16 +32,35 @@ const photosMixin = {
     }
   },
   methods: {
-    getRecentPhotos(offset, limit) {
+    loadPhotos() {
+      this.getRecentPhotos().then(() => {
+        this.renderGallery();
+        this.setupSlideShow();
+      });
+    },
+    getRecentPhotos() {
       this.message = 'Loading...';
-      limit = limit || this.limit
+      const params = {
+        limit: this.limit,
+        offset: this.offset
+      };
 
-      return fetch('/api/v1/photos?limit='+limit+'&offset='+offset)
+      if (this.searchTerm) {
+        params['search'] = this.searchTerm;
+      }
+
+      const esc = encodeURIComponent;
+      const query = Object.keys(params)
+        .map(k => esc(k) + '=' + esc(params[k]))
+        .join('&');
+
+      return fetch('/api/v1/photos?' + query)
         .then(response => {
           return response.json();
         })
         .then(data => {
           const photos = data.data;
+          this.totalPhotoCount = data.meta.count;
           this.addPhotosToGallery(photos);
           this.message = null;
         })
@@ -51,14 +71,15 @@ const photosMixin = {
     },
     getMorePhotos() {
       this.offset = this.offset + this.limit;
-      this.getRecentPhotos(this.offset, this.limit).then(() => {
-        this.renderGallery();
-        this.setupSlideShow();
-      });
+      if (this.offset >= this.totalPhotoCount)
+        return;
+      this.loadPhotos();
     },
     renderGallery() {
       new flexImages({ selector: '.flex-images', rowHeight: this.photoRowHeight });
-      window.addEventListener('scroll', this.infiniteScroll);
+      //if (this.offset < this.totalPhotoCount) {
+        window.addEventListener('scroll', this.infiniteScroll);
+      //}
     },
     addPhotosToGallery(photos) {
       // Gallery
@@ -66,6 +87,12 @@ const photosMixin = {
       // Slideshow
       var photoSwipePhotos = photos.map(serializeForPhotoSwipe)
       this.photos.push(...photoSwipePhotos);
+    },
+    searchPhotos() {
+      this.photos = [];
+      this.offset = 0;
+      this.totalPhotoCount = 0;
+      this.loadPhotos();
     },
     setupSlideShow() {
       const thumbnails = document.querySelectorAll('.item');
@@ -94,8 +121,6 @@ const photosMixin = {
       if( isNaN(options.index) ) {
         return;
       }
-
-      console.log('open photo ' + options.index + ' of ' + this.photos.length);
 
       const gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, this.photos, options);
       gallery.init();

@@ -12,10 +12,22 @@
 
   <body>
     <div id="app">
-      <!-- header: search box, albums, tags?, map? -->
       {% raw %}
+        <div class="header" id="pageHeader">
+          <form class="wrap" v-on:submit.prevent="searchPhotos">
+            <div class="search">
+              <input v-model="searchTerm" type="text" class="searchTerm" placeholder="Search">
+              <button type="submit" class="searchButton">
+                <i class="fas fa-search"></i>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- TODO: footer -->
         {{ message }}
-        <div class="flex-images">
+
+        <div class="flex-images content">
           <div v-for="(photo, index) in photos" class="item" :id="photo.id" :data-w="photo.w" :data-h="photo.h" :data-index="index">
             <img :src="photo.thumbnail" :alt="photo.title"/>
             <!-- {{ photo.title }} -->

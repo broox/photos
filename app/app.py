@@ -18,7 +18,8 @@ def proxy(path):
     verify_ssl = FLASK_ENV == PRODUCTION
     url = f'{API_HOST}{path}?{request.query_string.decode("utf-8")}'
     app.logger.info(f'Requesting {url}')
-    return get(url, verify=verify_ssl).content
+    response = get(url, verify=verify_ssl)
+    return response.content, response.status_code
 
 if __name__ == "__main__":
     if FLASK_ENV == PRODUCTION:

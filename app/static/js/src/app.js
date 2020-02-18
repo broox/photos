@@ -5,9 +5,16 @@ const app = new Vue({
   },
   mixins: [photosMixin],
   beforeMount() {
-    this.getRecentPhotos().then(() => {
-      this.renderGallery();
-      this.setupSlideShow();
-    });
+    this.loadPhotos();
   }
 })
+
+const header = document.getElementById('pageHeader');
+const sticky = header.offsetTop;
+window.onscroll = () => {
+  if (window.pageYOffset > sticky) {
+    header.classList.add("sticky");
+  } else {
+    header.classList.remove("sticky");
+  }
+}
