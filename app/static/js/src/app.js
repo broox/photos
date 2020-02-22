@@ -3,11 +3,8 @@ const app = new Vue({
   data: {
     message: null
   },
-  mixins: [photosMixin],
-  beforeMount() {
-    this.loadPhotos();
-  }
-})
+  mixins: [photosMixin]
+});
 
 const header = document.getElementById('pageHeader');
 const sticky = header.offsetTop;
@@ -17,4 +14,4 @@ window.onscroll = () => {
   } else {
     header.classList.remove("sticky");
   }
-}
+};

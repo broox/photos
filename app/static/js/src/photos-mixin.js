@@ -21,22 +21,33 @@ const photosMixin = {
   data: {
     photos: [],
     offset: 0,
-    limit: 20,
+    limit: 40,
     photoRowHeight: 200,
-    searchTerm: null
+    searchTerm: null,
+    searching: false
   },
   created() {
     if (isLargeViewport()) {
-      this.limit = 40;
       this.photoRowHeight = 300;
     }
   },
   methods: {
     loadPhotos() {
       this.getRecentPhotos().then(() => {
+        this.updateGalleryURL();
         this.renderGallery();
         this.setupSlideShow();
       });
+    },
+    updateGalleryURL() {
+      let url = window.location.origin;
+      let title = 'Page';
+      if (this.searchTerm) {
+        const searchTerm = encodeURIComponent(this.searchTerm)
+        url += '/search/'+searchTerm;
+        title = searchTerm;
+      }
+      window.history.pushState({ id: title }, title, url);
     },
     getRecentPhotos() {
       this.message = 'Loading...';
@@ -88,11 +99,22 @@ const photosMixin = {
       var photoSwipePhotos = photos.map(serializeForPhotoSwipe)
       this.photos.push(...photoSwipePhotos);
     },
-    searchPhotos() {
+    resetPage() {
       this.photos = [];
       this.offset = 0;
       this.totalPhotoCount = 0;
+      window.scrollTo(0, 0);
+    },
+    clearSearch() {
+      this.searching = false;
+      this.searchTerm = null;
+      this.resetPage();
       this.loadPhotos();
+    },
+    searchPhotos() {
+      this.resetPage();
+      this.loadPhotos();
+      this.searching = true;
     },
     setupSlideShow() {
       const thumbnails = document.querySelectorAll('.item');

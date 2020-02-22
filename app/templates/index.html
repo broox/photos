@@ -1,13 +1,12 @@
 <!doctype html>
-
 <html lang="en-us">   
   <head>
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Photos</title>
-    <script src="/static/js/lib.min.js"></script>
-    <link rel="stylesheet" href="/static/css/lib.css">
+    <script src="/static/js/lib.min.js?20-2-22"></script>
+    <link rel="stylesheet" href="/static/css/lib.css?20-2-22">
   </head>
 
   <body>
@@ -16,9 +15,12 @@
         <div class="header" id="pageHeader">
           <form class="wrap" v-on:submit.prevent="searchPhotos">
             <div class="search">
-              <input v-model="searchTerm" type="text" class="searchTerm" placeholder="Search">
-              <button type="submit" class="searchButton">
+              <input type="text" class="searchTerm" placeholder="Search" autocorrect="off" autocapitalize="off" v-model="searchTerm" :disabled="searching">
+              <button type="submit" class="searchButton" v-show="!searching">
                 <i class="fas fa-search"></i>
+              </button>
+              <button type="button" class="clearSearch" v-show="searching" v-on:click="clearSearch">
+                <i class="fas fa-times"></i>
               </button>
             </div>
           </form>
@@ -76,6 +78,14 @@
         </div>
       {% endraw %}
     </div>
-    <script src="/static/js/app.combined.js"></script>
+    <script src="/static/js/app.combined.js?20-2-22"></script>
+    <script type="text/javascript">
+      {%- if search_term %}
+        app.searchTerm = '{{search_term}}';
+        app.searchPhotos();
+      {%- else %}
+        app.loadPhotos();
+      {%- endif %}
+    </script>
   </body>
 </html>

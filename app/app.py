@@ -13,6 +13,10 @@ PRODUCTION = 'production'
 def home():
     return render_template('index.html')
 
+@app.route('/search/<string:search_term>')
+def search(search_term):
+    return render_template('index.html', search_term=search_term)
+
 @app.route('/api/<path:path>', methods=['GET'])
 def proxy(path):
     verify_ssl = FLASK_ENV == PRODUCTION
