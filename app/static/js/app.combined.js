@@ -1,3 +1,10 @@
+function buildQueryString(params) {
+  const esc = encodeURIComponent;
+  return Object.keys(params)
+    .map(k => esc(k) + '=' + esc(params[k]))
+    .join('&');
+}
+
 function getBrowserWidth() {
   return Math.max(
     document.body.scrollWidth,
@@ -43,12 +50,15 @@ function serializeForPhotoSwipe(photo) {
 
 const photosMixin = {
   data: {
+    album: null,
+    albums: [],
     photos: [],
     offset: 0,
     limit: 40,
     photoRowHeight: 200,
     searchTerm: null,
-    searching: false
+    searching: false,
+    totalPhotoCount: 0
   },
   created() {
     if (isLargeViewport()) {
@@ -57,20 +67,27 @@ const photosMixin = {
   },
   methods: {
     loadPhotos() {
+      this.updateGalleryURL();
       this.getRecentPhotos().then(() => {
-        this.updateGalleryURL();
         this.renderGallery();
         this.setupSlideShow();
       });
     },
     updateGalleryURL() {
       let url = window.location.origin;
-      let title = 'Page';
+      let title = 'Broox Photos';
+
+      if (this.album) {
+        url += '/'+this.album.slug;
+        title = this.album.title;
+      }
+
       if (this.searchTerm) {
         const searchTerm = encodeURIComponent(this.searchTerm)
         url += '/search/'+searchTerm;
         title = searchTerm;
       }
+      document.title = title;
       window.history.pushState({ id: title }, title, url);
     },
     getRecentPhotos() {
@@ -80,16 +97,15 @@ const photosMixin = {
         offset: this.offset
       };
 
+      if (this.album) {
+        params['album_id'] = this.album.id;
+      }
+
       if (this.searchTerm) {
         params['search'] = this.searchTerm;
       }
 
-      const esc = encodeURIComponent;
-      const query = Object.keys(params)
-        .map(k => esc(k) + '=' + esc(params[k]))
-        .join('&');
-
-      return fetch('/api/v1/photos?' + query)
+      return fetch('/api/v1/photos?' + buildQueryString(params))
         .then(response => {
           return response.json();
         })
@@ -112,9 +128,9 @@ const photosMixin = {
     },
     renderGallery() {
       new flexImages({ selector: '.flex-images', rowHeight: this.photoRowHeight });
-      //if (this.offset < this.totalPhotoCount) {
+      // if (this.offset < this.totalPhotoCount) {
         window.addEventListener('scroll', this.infiniteScroll);
-      //}
+      // }
     },
     addPhotosToGallery(photos) {
       // Gallery
@@ -124,10 +140,16 @@ const photosMixin = {
       this.photos.push(...photoSwipePhotos);
     },
     resetPage() {
+      this.albums = [];
       this.photos = [];
       this.offset = 0;
       this.totalPhotoCount = 0;
       window.scrollTo(0, 0);
+    },
+    clearAlbum() {
+      this.album = null;
+      this.resetPage();
+      this.loadPhotos();
     },
     clearSearch() {
       this.searching = false;
@@ -135,10 +157,47 @@ const photosMixin = {
       this.resetPage();
       this.loadPhotos();
     },
+    realtimeSearch() {
+      if (this.searchTerm.length > 2) {
+        this.searchAlbums();
+      }
+    },
+    searchAlbums() {
+      this.message = 'Loading...';
+      const params = {
+        limit: 15,
+        search: this.searchTerm
+      };
+
+      console.log('search for albums', params);
+
+      return fetch('/api/v1/albums?' + buildQueryString(params))
+        .then(response => {
+          return response.json();
+        })
+        .then(data => {
+          if (this.searching) {
+            return;
+          }
+          const albums = data.data;
+          this.albums = albums;
+          // this.totalPhotoCount = data.meta.count;
+          // this.addPhotosToGallery(photos);
+          this.message = null;
+        })
+        .catch(err => {
+          this.message = 'Error loading albums';
+          console.error('Error fetching albums');
+        });
+    },
     searchPhotos() {
       this.resetPage();
       this.loadPhotos();
       this.searching = true;
+    },
+    selectAlbum(album) {
+      this.album = album;
+      this.clearSearch();
     },
     setupSlideShow() {
       const thumbnails = document.querySelectorAll('.item');

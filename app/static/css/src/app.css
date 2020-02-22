@@ -1,5 +1,7 @@
 body {
+  color: #222;
   font-family: Helvetica, Arial, sans-serif;
+  font-size: 18px;
   margin: 0;
 }
 
@@ -13,11 +15,46 @@ body {
   top: 0;
   width: 100%;
   z-index: 1;
+
+  height: 60px;
+}
+
+.albumTitle {
+  height: 60px;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.albumTitle .back {
+  cursor: pointer;
+  padding: 20px;
+}
+
+.albumTitle h1 {
+  display: inline-block;
+  font-size: 25px;
+  margin: 0;
+  padding: 0;
+}
+
+.albumTitle h1 span {
+  color: #999;
+  font-size: 0.6em;
+  margin-left: 0.6em;
 }
 
 .wrap {
-  margin: 0;
-  padding: 10px 16px;
+  box-shadow: 0 3px 1px -2px rgba(0,0,0,.2), 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12);
+  border-radius: 5px;
+  margin: 10px 16px;
+  padding: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: #fff;
 }
 
 .sticky {
@@ -31,13 +68,10 @@ body {
   width: 100%;
   position: relative;
   display: flex;
-  box-shadow: 0 3px 1px -2px rgba(0,0,0,0.2), 0 2px 2px 0 rgba(0,0,0,0.14), 0 1px 5px 0 rgba(0,0,0,0.12);
-  border-radius: 5px;
 }
 
 .searchTerm {
   background: #fff;
-  border-radius: 0 5px 5px 0;
   border: none;
   color: #222;
   font-size: 18px;
@@ -62,6 +96,35 @@ body {
 
 .searchTerm:focus{
   color: #222;
+}
+
+.searchResults {
+  border-top: 1px solid #ddd;
+  display: flex;
+}
+
+.searchResults ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+.searchResults ul li {
+  cursor: pointer;
+  padding: 10px 12px;
+}
+
+.searchResults ul li:hover {
+  background-color: #eee;
+}
+
+.searchResults ul li:last-child {
+  border-radius: 0 0 5px 5px;
+}
+
+.searchResults ul li .fas {
+  margin-right: 12px;
 }
 
 .searchButton, .clearSearch {

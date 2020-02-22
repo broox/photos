@@ -1,3 +1,10 @@
+function buildQueryString(params) {
+  const esc = encodeURIComponent;
+  return Object.keys(params)
+    .map(k => esc(k) + '=' + esc(params[k]))
+    .join('&');
+}
+
 function getBrowserWidth() {
   return Math.max(
     document.body.scrollWidth,

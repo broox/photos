@@ -13,15 +13,25 @@
     <div id="app">
       {% raw %}
         <div class="header" id="pageHeader">
-          <form class="wrap" v-on:submit.prevent="searchPhotos">
+          <div class="albumTitle" v-if="album">
+            <i class="fas fa-chevron-left back" v-on:click="clearAlbum"></i>
+            <h1>{{ album.title }} <span v-show="totalPhotoCount > 0">{{totalPhotoCount.toLocaleString()}} photos</span></h1>
+          </div>
+          <form class="wrap" v-on:submit.prevent="searchPhotos" v-show="!album">
             <div class="search">
-              <input type="text" class="searchTerm" placeholder="Search" autocorrect="off" autocapitalize="off" v-model="searchTerm" :disabled="searching">
+              <input type="text" class="searchTerm" placeholder="Search" autocorrect="off" autocapitalize="off" v-model="searchTerm" v-on:change="realtimeSearch" :disabled="searching">
               <button type="submit" class="searchButton" v-show="!searching">
                 <i class="fas fa-search"></i>
               </button>
               <button type="button" class="clearSearch" v-show="searching" v-on:click="clearSearch">
                 <i class="fas fa-times"></i>
               </button>
+            </div>
+            <div class="searchResults" v-show="albums.length > 0">
+              <ul>
+                <li v-for="album in albums" v-on:click="selectAlbum(album)"><i class="fas fa-images"></i> {{album.title}}</li>
+                <!-- <li><i class="fas fa-tag"></i> Derek Brooks</li> -->
+              </ul>
             </div>
           </form>
         </div>
@@ -80,7 +90,10 @@
     </div>
     <script src="/static/js/app.combined.js?20-2-22"></script>
     <script type="text/javascript">
-      {%- if search_term %}
+      {%- if album %}
+        app.album = {{ album|tojson }};
+        app.loadPhotos();
+      {%- elif search_term %}
         app.searchTerm = '{{search_term}}';
         app.searchPhotos();
       {%- else %}
