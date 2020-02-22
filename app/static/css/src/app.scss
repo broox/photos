@@ -1,5 +1,9 @@
+$headerHeight: 60px;
+$primaryTextColor: #222;
+$inputPlaceholderTextColor: #DEDEDE;
+
 body {
-  color: #222;
+  color: $primaryTextColor;
   font-family: Helvetica, Arial, sans-serif;
   font-size: 18px;
   margin: 0;
@@ -16,33 +20,36 @@ body {
   width: 100%;
   z-index: 1;
 
-  height: 60px;
+  height: $headerHeight;
 }
 
 .albumTitle {
-  height: 60px;
+  height: $headerHeight;
   display: flex;
   flex-flow: row nowrap;
   justify-content: flex-start;
   align-items: center;
-}
 
-.albumTitle .back {
-  cursor: pointer;
-  padding: 20px;
-}
+  .back {
+    cursor: pointer;
+    padding: 20px;
+  }
 
-.albumTitle h1 {
-  display: inline-block;
-  font-size: 25px;
-  margin: 0;
-  padding: 0;
-}
+  h1 {
+    display: inline-block;
+    font-size: 20px;
+    margin: 0;
+    overflow: hidden;
+    padding: 0 10px 0 0;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 
-.albumTitle h1 span {
-  color: #999;
-  font-size: 0.6em;
-  margin-left: 0.6em;
+    /* span {
+      color: #999;
+      font-size: 0.6em;
+      margin-left: 0.6em;
+    } */
+  }
 }
 
 .wrap {
@@ -73,58 +80,61 @@ body {
 .searchTerm {
   background: #fff;
   border: none;
-  color: #222;
+  color: $primaryTextColor;
   font-size: 18px;
   height: 20px;
   margin: 4px 7px;
   outline: none;
   padding: 5px;
   width: 100%;
-}
 
-.searchTerm::placeholder {
-  color: #DEDEDE;
-}
-
-.searchTerm:-ms-input-placeholder {
-  color: #DEDEDE;
-}
-
-.searchTerm::-ms-input-placeholder {
-  color: #DEDEDE;
-}
-
-.searchTerm:focus{
-  color: #222;
+  &::placeholder {
+    color: $inputPlaceholderTextColor;
+  }
+  
+  &:-ms-input-placeholder {
+    color: $inputPlaceholderTextColor;
+  }
+  
+  &::-ms-input-placeholder {
+    color: $inputPlaceholderTextColor;
+  }
+  
+  &:focus{
+    color: $primaryTextColor;
+  }
 }
 
 .searchResults {
   border-top: 1px solid #ddd;
   display: flex;
-}
 
-.searchResults ul {
-  list-style-type: none;
-  margin: 0;
-  padding: 0;
-  width: 100%;
-}
+  ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+  
+    li {
+      cursor: pointer;
+      overflow: hidden;
+      padding: 10px 12px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
 
-.searchResults ul li {
-  cursor: pointer;
-  padding: 10px 12px;
-}
+      &:hover {
+        background-color: #eee;
+      }
 
-.searchResults ul li:hover {
-  background-color: #eee;
-}
+      &:last-child {
+        border-radius: 0 0 5px 5px;
+      }
 
-.searchResults ul li:last-child {
-  border-radius: 0 0 5px 5px;
-}
-
-.searchResults ul li .fas {
-  margin-right: 12px;
+      .fas {
+        margin-right: 12px;
+      }
+    }
+  }  
 }
 
 .searchButton, .clearSearch {
@@ -143,4 +153,8 @@ body {
 .content {
   margin-top: 55px;
   z-index: 0;
+}
+
+.pageText {
+  padding: 10px;
 }

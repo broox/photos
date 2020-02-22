@@ -5,8 +5,8 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Photos</title>
-    <script src="/static/js/lib.min.js?20-2-22"></script>
-    <link rel="stylesheet" href="/static/css/lib.css?20-2-22">
+    <script src="/static/js/lib.min.js?20-2-22-3"></script>
+    <link rel="stylesheet" href="/static/css/lib.css?20-2-22-3">
   </head>
 
   <body>
@@ -15,11 +15,11 @@
         <div class="header" id="pageHeader">
           <div class="albumTitle" v-if="album">
             <i class="fas fa-chevron-left back" v-on:click="clearAlbum"></i>
-            <h1>{{ album.title }} <span v-show="totalPhotoCount > 0">{{totalPhotoCount.toLocaleString()}} photos</span></h1>
+            <h1>{{ album.title }}</h1>
           </div>
           <form class="wrap" v-on:submit.prevent="searchPhotos" v-show="!album">
             <div class="search">
-              <input type="text" class="searchTerm" placeholder="Search" autocorrect="off" autocapitalize="off" v-model="searchTerm" v-on:change="realtimeSearch" :disabled="searching">
+              <input type="text" class="searchTerm" placeholder="Search" autocorrect="off" autocapitalize="off" v-model="searchTerm" v-on:keyup="realtimeSearch" :disabled="searching">
               <button type="submit" class="searchButton" v-show="!searching">
                 <i class="fas fa-search"></i>
               </button>
@@ -40,6 +40,7 @@
         {{ message }}
 
         <div class="flex-images content">
+          <div class="pageText" v-show="pageText" v-html="pageText"></div>
           <div v-for="(photo, index) in photos" class="item" :id="photo.id" :data-w="photo.w" :data-h="photo.h" :data-index="index">
             <img :src="photo.thumbnail" :alt="photo.title"/>
             <!-- {{ photo.title }} -->
@@ -88,11 +89,11 @@
         </div>
       {% endraw %}
     </div>
-    <script src="/static/js/app.combined.js?20-2-22"></script>
+    <script src="/static/js/app.combined.js?20-2-22-3"></script>
     <script type="text/javascript">
       {%- if album %}
-        app.album = {{ album|tojson }};
-        app.loadPhotos();
+        const album = {{ album|tojson }};
+        app.selectAlbum(album);
       {%- elif search_term %}
         app.searchTerm = '{{search_term}}';
         app.searchPhotos();

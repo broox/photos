@@ -1,12 +1,19 @@
 const cleanCSS = require('gulp-clean-css');
 const concat = require('gulp-concat');
 const gulp = require('gulp');
+const merge = require('merge-stream');
 const rename = require('gulp-rename');
+const sass = require('gulp-sass');
 const sourcemaps = require('gulp-sourcemaps');
 const terser = require('gulp-terser');
 
 gulp.task('concatenate-css-libraries', () => {
-  return gulp.src(['./app/static/css/src/*.css', './app/static/css/lib/*.css'])
+  const appStream = gulp.src('./app/static/css/src/*.scss')
+  .pipe(sass({ errLogToConsole: true, outputStyle: 'compressed' }));
+
+  const libStream = gulp.src('./app/static/css/lib/*.css');
+
+  return merge(appStream, libStream)
   .pipe(concat('lib.css'))
   .pipe(cleanCSS())
   .pipe(gulp.dest('./app/static/css'));

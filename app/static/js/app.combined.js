@@ -55,6 +55,7 @@ const photosMixin = {
     photos: [],
     offset: 0,
     limit: 40,
+    pageText: null,
     photoRowHeight: 200,
     searchTerm: null,
     searching: false,
@@ -141,6 +142,7 @@ const photosMixin = {
     },
     resetPage() {
       this.albums = [];
+      this.pageText = null;
       this.photos = [];
       this.offset = 0;
       this.totalPhotoCount = 0;
@@ -160,6 +162,8 @@ const photosMixin = {
     realtimeSearch() {
       if (this.searchTerm.length > 2) {
         this.searchAlbums();
+      } else {
+        this.albums = [];
       }
     },
     searchAlbums() {
@@ -168,8 +172,6 @@ const photosMixin = {
         limit: 15,
         search: this.searchTerm
       };
-
-      console.log('search for albums', params);
 
       return fetch('/api/v1/albums?' + buildQueryString(params))
         .then(response => {
@@ -198,6 +200,9 @@ const photosMixin = {
     selectAlbum(album) {
       this.album = album;
       this.clearSearch();
+      if (this.album.description) {
+        this.pageText = this.album.description;
+      }
     },
     setupSlideShow() {
       const thumbnails = document.querySelectorAll('.item');
