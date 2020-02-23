@@ -52,13 +52,14 @@ const photosMixin = {
   data: {
     album: null,
     albums: [],
+    fullSearch: false,   // whether we are performing a full search after a form submit
+    limit: 40,           // page size
     photos: [],
-    offset: 0,
-    limit: 40,
-    pageText: null,
+    offset: 0,           // paging
+    pageText: null,      // for album descriptions
     photoRowHeight: 200,
-    searchTerm: null,
-    searching: false,
+    searchInput: null,   // what is typed into the input form
+    searchTerm: null,    // the currently active search
     totalPhotoCount: 0
   },
   created() {
@@ -66,32 +67,35 @@ const photosMixin = {
       this.photoRowHeight = 300;
     }
   },
+  computed: {
+    showRealtimeSearchResults() {
+      return this.albums.length > 0;
+    }
+  },
   methods: {
-    loadPhotos() {
-      this.updateGalleryURL();
-      this.getRecentPhotos().then(() => {
-        this.renderGallery();
-        this.setupSlideShow();
-      });
+    addPhotosToGallery(photos) {
+      const photoSwipePhotos = photos.map(serializeForPhotoSwipe)
+      this.photos.push(...photoSwipePhotos);
     },
-    updateGalleryURL() {
-      let url = window.location.origin;
-      let title = 'Broox Photos';
-
-      if (this.album) {
-        url += '/'+this.album.slug;
-        title = this.album.title;
-      }
-
-      if (this.searchTerm) {
-        const searchTerm = encodeURIComponent(this.searchTerm)
-        url += '/search/'+searchTerm;
-        title = searchTerm;
-      }
-      document.title = title;
-      window.history.pushState({ id: title }, title, url);
+    clearAlbum() {
+      this.album = null;
+      this.resetPage();
+      return this.loadPhotos();
     },
-    getRecentPhotos() {
+    clearRealtimeSearchResults() {
+      this.albums = [];
+    },
+    clearSearch() {
+      this.searchTerm = null;
+    },
+    clearSearchForm() {
+      this.searchInput = null;
+      this.clearRealtimeSearchResults();
+      this.clearSearch();
+      this.resetPage();
+      return this.loadPhotos();
+    },
+    fetchPhotos() {
       this.message = 'Loading...';
       const params = {
         limit: this.limit,
@@ -121,93 +125,118 @@ const photosMixin = {
           console.error('Error fetching photos');
         });
     },
-    getMorePhotos() {
+    loadPhotos() {
+      this.updateGalleryURL();
+      return this.fetchPhotos().then(() => {
+        this.renderGallery();
+        this.setupSlideShow();
+      });
+    },
+    loadMorePhotos() {
       this.offset = this.offset + this.limit;
       if (this.offset >= this.totalPhotoCount)
         return;
-      this.loadPhotos();
+      return this.loadPhotos();
+    },
+    realtimeSearch(event) {
+      if (this.lastSearchTerm == this.searchInput) {
+        return;
+      }
+
+      if (this.searchInput.length > 2 && event.key !== 'Enter') {
+        this.searchAlbums(this.searchInput);
+        this.lastSearchTerm = this.searchInput;
+      } else {
+        this.clearRealtimeSearchResults();
+      }
     },
     renderGallery() {
       new flexImages({ selector: '.flex-images', rowHeight: this.photoRowHeight });
-      // if (this.offset < this.totalPhotoCount) {
+      if (this.offset < this.totalPhotoCount) {
         window.addEventListener('scroll', this.infiniteScroll);
-      // }
-    },
-    addPhotosToGallery(photos) {
-      // Gallery
-      // this.photos.push(...photos);
-      // Slideshow
-      var photoSwipePhotos = photos.map(serializeForPhotoSwipe)
-      this.photos.push(...photoSwipePhotos);
+      }
     },
     resetPage() {
-      this.albums = [];
       this.pageText = null;
       this.photos = [];
       this.offset = 0;
       this.totalPhotoCount = 0;
       window.scrollTo(0, 0);
     },
-    clearAlbum() {
-      this.album = null;
-      this.resetPage();
-      this.loadPhotos();
-    },
-    clearSearch() {
-      this.searching = false;
-      this.searchTerm = null;
-      this.resetPage();
-      this.loadPhotos();
-    },
-    realtimeSearch() {
-      if (this.searchTerm.length > 2) {
-        this.searchAlbums();
-      } else {
-        this.albums = [];
-      }
-    },
-    searchAlbums() {
+    searchAlbums(term) {
       this.message = 'Loading...';
       const params = {
         limit: 15,
-        search: this.searchTerm
+        search: term
       };
 
+      const lastSearch = term;
       return fetch('/api/v1/albums?' + buildQueryString(params))
-        .then(response => {
-          return response.json();
-        })
-        .then(data => {
-          if (this.searching) {
-            return;
-          }
-          const albums = data.data;
-          this.albums = albums;
-          // this.totalPhotoCount = data.meta.count;
-          // this.addPhotosToGallery(photos);
-          this.message = null;
-        })
-        .catch(err => {
-          this.message = 'Error loading albums';
-          console.error('Error fetching albums');
-        });
+      .then(response => {
+        return response.json();
+      })
+      .then(data => {
+        if (this.fullSearch || lastSearch !== term) {
+          return;
+        }
+        const albums = data.data;
+        this.albums = albums;
+        this.message = null;
+      })
+      .catch(err => {
+        this.message = 'Error loading albums';
+        console.error('Error fetching albums');
+      });
     },
     searchPhotos() {
+      this.clearRealtimeSearchResults();
       this.resetPage();
-      this.loadPhotos();
-      this.searching = true;
+      this.searchTerm = this.searchInput;
+      this.fullSearch = true;
+      this.loadPhotos().then(() => {
+        this.fullSearch = false;
+      });
     },
     selectAlbum(album) {
+      // keep this.albums set so that the search results are retained
+      // when the user goes back
       this.album = album;
       this.clearSearch();
+      this.resetPage();
       if (this.album.description) {
         this.pageText = this.album.description;
       }
+      return this.loadPhotos();
     },
     setupSlideShow() {
       const thumbnails = document.querySelectorAll('.item');
       for (let i = thumbnails.length; i--;) {
         thumbnails[i].onclick = this.openSlideShow;
+      }
+    },
+    syncSearchForm() {
+      if (this.searchInput !== this.searchTerm) {
+        this.searchInput = this.searchTerm;
+      }
+    },
+    updateGalleryURL() {
+      let url = window.location.origin;
+      let title = 'Broox Photos';
+
+      if (this.album) {
+        url += '/'+this.album.slug;
+        title = this.album.title;
+      }
+
+      if (this.searchTerm) {
+        const searchTerm = encodeURIComponent(this.searchTerm)
+        url += '/search/'+searchTerm;
+        title = searchTerm;
+      }
+
+      document.title = title;
+      if (document.location !== url) {
+        window.history.replaceState({ id: title }, title, url);
       }
     },
     openSlideShow(event) {
@@ -239,7 +268,7 @@ const photosMixin = {
       const documentHeight = document.documentElement.offsetHeight;
       const offset = document.documentElement.scrollTop + window.innerHeight + this.photoRowHeight * 10;
       if (offset >= documentHeight) {
-        this.getMorePhotos();
+        this.loadMorePhotos();
         window.removeEventListener('scroll', this.infiniteScroll);
       }
     }
@@ -262,3 +291,8 @@ window.onscroll = () => {
     header.classList.remove("sticky");
   }
 };
+document.onkeydown = (event) => {
+  if (event.key === 'Escape') {
+      app.clearRealtimeSearchResults();
+  }
+}

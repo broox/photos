@@ -19,15 +19,15 @@
           </div>
           <form class="wrap" v-on:submit.prevent="searchPhotos" v-show="!album">
             <div class="search">
-              <input type="text" class="searchTerm" placeholder="Search" autocorrect="off" autocapitalize="off" v-model="searchTerm" v-on:keyup="realtimeSearch" :disabled="searching">
-              <button type="submit" class="searchButton" v-show="!searching">
+              <input type="text" class="searchInput" placeholder="Search" autocorrect="off" autocapitalize="off" v-model="searchInput" v-on:input="realtimeSearch" v-on:paste="realtimeSearch" v-on:blur="syncSearchForm">
+              <button type="submit" class="searchButton" v-show="!searchTerm">
                 <i class="fas fa-search"></i>
               </button>
-              <button type="button" class="clearSearch" v-show="searching" v-on:click="clearSearch">
+              <button type="button" class="clearSearch" v-show="searchTerm" v-on:click="clearSearchForm">
                 <i class="fas fa-times"></i>
               </button>
             </div>
-            <div class="searchResults" v-show="albums.length > 0">
+            <div class="searchResults" v-show="showRealtimeSearchResults">
               <ul>
                 <li v-for="album in albums" v-on:click="selectAlbum(album)"><i class="fas fa-images"></i> {{album.title}}</li>
                 <!-- <li><i class="fas fa-tag"></i> Derek Brooks</li> -->
@@ -37,8 +37,8 @@
         </div>
 
         <!-- TODO: footer -->
-        {{ message }}
-
+        <!-- {{ message }} -->
+        <div class="contentCover" v-show="showRealtimeSearchResults" v-on:click="clearRealtimeSearchResults"></div>
         <div class="flex-images content">
           <div class="pageText" v-show="pageText" v-html="pageText"></div>
           <div v-for="(photo, index) in photos" class="item" :id="photo.id" :data-w="photo.w" :data-h="photo.h" :data-index="index">
@@ -48,44 +48,42 @@
         </div>
 
         <div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
-            <div class="pswp__bg"></div>
-            <div class="pswp__scroll-wrap">
-                <div class="pswp__container">
-                    <div class="pswp__item"></div>
-                    <div class="pswp__item"></div>
-                    <div class="pswp__item"></div>
-                </div>
-                <div class="pswp__ui pswp__ui--hidden">
-                    <div class="pswp__top-bar">
-                        <div class="pswp__counter"></div>
-                        <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
-                        <button class="pswp__button pswp__button--share" title="Share"></button>
-                        <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
-                        <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
-                        <div class="pswp__preloader">
-                            <div class="pswp__preloader__icn">
-                              <div class="pswp__preloader__cut">
-                                <div class="pswp__preloader__donut"></div>
-                              </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
-                        <div class="pswp__share-tooltip"></div> 
-                    </div>
-
-                    <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
-                    </button>
-
-                    <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
-                    </button>
-
-                    <div class="pswp__caption">
-                        <div class="pswp__caption__center"></div>
-                    </div>
-                </div>
+          <div class="pswp__bg"></div>
+          <div class="pswp__scroll-wrap">
+            <div class="pswp__container">
+              <div class="pswp__item"></div>
+              <div class="pswp__item"></div>
+              <div class="pswp__item"></div>
             </div>
+            <div class="pswp__ui pswp__ui--hidden">
+              <div class="pswp__top-bar">
+                <div class="pswp__counter"></div>
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+                <div class="pswp__preloader">
+                  <div class="pswp__preloader__icn">
+                    <div class="pswp__preloader__cut">
+                      <div class="pswp__preloader__donut"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+              </div>
+
+              <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)"></button>
+
+              <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button>
+
+              <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+              </div>
+            </div>
+          </div>
         </div>
       {% endraw %}
     </div>
@@ -95,7 +93,7 @@
         const album = {{ album|tojson }};
         app.selectAlbum(album);
       {%- elif search_term %}
-        app.searchTerm = '{{search_term}}';
+        app.searchInput = '{{search_term}}';
         app.searchPhotos();
       {%- else %}
         app.loadPhotos();

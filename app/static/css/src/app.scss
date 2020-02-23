@@ -18,7 +18,7 @@ body {
   right: 0;
   top: 0;
   width: 100%;
-  z-index: 1;
+  z-index: 2;
 
   height: $headerHeight;
 }
@@ -77,7 +77,7 @@ body {
   display: flex;
 }
 
-.searchTerm {
+.searchInput {
   background: #fff;
   border: none;
   color: $primaryTextColor;
@@ -150,9 +150,22 @@ body {
   width: 40px;
 }
 
+.contentCover {
+  bottom: 0px;
+  left: 0px;
+  position: absolute;
+  right: 0px;
+  top: 0px;
+  z-index: 1;
+}
+
 .content {
   margin-top: 55px;
   z-index: 0;
+
+  .item {
+    cursor: pointer;
+  }
 }
 
 .pageText {
