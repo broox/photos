@@ -29,11 +29,28 @@ function isLargeViewport() {
   return getBrowserWidth() > 500;
 }
 
+
+function pluralize(number, word) {
+  if (number == 1){
+    return word;
+  } else {
+    return word+'s';
+  }
+};
 function serializeForPhotoSwipe(photo) {
   const thumbnail = isLargeViewport() ? photo.images.medium : photo.images.small;
   let src = photo.images.medium;
   if (photo.images.large) {
     src = photo.images.large;
+  }
+
+  const tags = photo.tags;
+  let description = photo.description;
+  if (tags) {
+    description += '<br>';
+    for (let i = 0; i < tags.length; i++) {
+      description += ' <a href="/tagged/'+tags[i].slug+'">#'+tags[i].name.replace(/\s/g, '')+'</a>';
+    }
   }
 
   return {
@@ -42,7 +59,7 @@ function serializeForPhotoSwipe(photo) {
     w: photo.width,
     h: photo.height,
     msrc: thumbnail,
-    title: photo.description,
+    title: description,
     thumbnail: thumbnail
   }
   // todo: album, camera, tags, etc
@@ -52,14 +69,19 @@ const photosMixin = {
   data: {
     album: null,
     albums: [],
+    cachedPhotos: [],
+    cachedPhotoAmount: 0,
     fullSearch: false,   // whether we are performing a full search after a form submit
     limit: 40,           // page size
+    loading: false,
     photos: [],
     offset: 0,           // paging
     pageText: null,      // for album descriptions
     photoRowHeight: 200,
     searchInput: null,   // what is typed into the input form
     searchTerm: null,    // the currently active search
+    tag: null,
+    title: null,
     totalPhotoCount: 0
   },
   created() {
@@ -69,7 +91,13 @@ const photosMixin = {
   },
   computed: {
     showRealtimeSearchResults() {
-      return this.albums.length > 0;
+      return this.albums.length > 0 && !this.album && !this.tag;
+    },
+    photoCountDisplay() {
+      const photoCount = this.totalPhotoCount;
+      if (photoCount) {
+        return photoCount.toLocaleString() + ' ' + pluralize(photoCount, 'photo');
+      }
     }
   },
   methods: {
@@ -82,7 +110,17 @@ const photosMixin = {
       this.resetPage();
       return this.loadPhotos();
     },
-    clearRealtimeSearchResults() {
+    clearGallery() {
+      this.title = null;
+      if (this.album) {
+        this.clearAlbum();
+      } else if (this.tag) {
+        this.clearTag();
+      }
+    },
+    clearRealtimeSearchResults(event) {
+      // event.preventDefault();
+      // event.stopPropagation();
       this.albums = [];
     },
     clearSearch() {
@@ -95,22 +133,46 @@ const photosMixin = {
       this.resetPage();
       return this.loadPhotos();
     },
+    clearTag() {
+      this.tag = null;
+      this.resetPage();
+      return this.loadPhotos();
+    },
     fetchPhotos() {
       this.message = 'Loading...';
+      this.loading = true;
       const params = {
         limit: this.limit,
         offset: this.offset
       };
+      const filters = {};
 
       if (this.album) {
-        params['album_id'] = this.album.id;
+        filters['album_id'] = this.album.id;
       }
 
       if (this.searchTerm) {
-        params['search'] = this.searchTerm;
+        filters['search'] = this.searchTerm;
       }
 
-      return fetch('/api/v1/photos?' + buildQueryString(params))
+      if (this.tag) {
+        filters['tag'] = this.tag;
+      }
+
+      let cacheHomePage = false;
+      // cache unfiltered photo results
+      if (!Object.keys(filters).length && this.offset == 0) {
+        if (this.cachedPhotos.length) {
+          this.message = null;
+          this.loading = false;
+          this.photos = this.cachedPhotos;
+          this.totalPhotoCount = this.cachedPhotoAmount;
+          return new Promise((resolve, reject) => { resolve(); });
+        }
+        cacheHomePage = true;
+      }
+
+      return fetch('/api/v1/photos?' + buildQueryString(Object.assign(params,filters)))
         .then(response => {
           return response.json();
         })
@@ -119,9 +181,16 @@ const photosMixin = {
           this.totalPhotoCount = data.meta.count;
           this.addPhotosToGallery(photos);
           this.message = null;
+          this.loading = false;
+
+          if (cacheHomePage) {
+            this.cachedPhotoAmount = this.totalPhotoCount;
+            this.cachedPhotos = this.photos.slice(0, 40);
+          }
         })
         .catch(err => {
           this.message = 'Error loading photos';
+          this.loading = false;
           console.error('Error fetching photos');
         });
     },
@@ -139,6 +208,7 @@ const photosMixin = {
       return this.loadPhotos();
     },
     realtimeSearch(event) {
+
       if (this.lastSearchTerm == this.searchInput) {
         return;
       }
@@ -148,6 +218,7 @@ const photosMixin = {
         this.lastSearchTerm = this.searchInput;
       } else {
         this.clearRealtimeSearchResults();
+        this.lastSearchTerm = null;
       }
     },
     renderGallery() {
@@ -165,6 +236,7 @@ const photosMixin = {
     },
     searchAlbums(term) {
       this.message = 'Loading...';
+      this.loading = true;
       const params = {
         limit: 15,
         search: term
@@ -182,9 +254,11 @@ const photosMixin = {
         const albums = data.data;
         this.albums = albums;
         this.message = null;
+        this.loading = false;
       })
       .catch(err => {
         this.message = 'Error loading albums';
+        this.loading = false;
         console.error('Error fetching albums');
       });
     },
@@ -201,11 +275,19 @@ const photosMixin = {
       // keep this.albums set so that the search results are retained
       // when the user goes back
       this.album = album;
+      this.title = album.title;
       this.clearSearch();
       this.resetPage();
       if (this.album.description) {
         this.pageText = this.album.description;
       }
+      return this.loadPhotos();
+    },
+    selectTag(tag) {
+      this.tag = tag;
+      this.title = tag;
+      this.clearSearch();
+      this.resetPage();
       return this.loadPhotos();
     },
     setupSlideShow() {
@@ -226,12 +308,13 @@ const photosMixin = {
       if (this.album) {
         url += '/'+this.album.slug;
         title = this.album.title;
-      }
-
-      if (this.searchTerm) {
+      } else if (this.searchTerm) {
         const searchTerm = encodeURIComponent(this.searchTerm)
         url += '/search/'+searchTerm;
         title = searchTerm;
+      } else if (this.tag) {
+        url += '/tagged/'+this.tag;
+        title = this.tag;
       }
 
       document.title = title;

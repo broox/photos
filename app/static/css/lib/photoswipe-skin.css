@@ -278,6 +278,11 @@
     padding: 10px;
     line-height: 20px;
     color: #CCC; }
+
+  .pswp__caption__center a {
+    color: #eee;
+    text-decoration: none;
+  }
   
   .pswp__caption--empty {
     display: none; }

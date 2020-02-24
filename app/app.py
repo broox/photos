@@ -29,6 +29,11 @@ def search(search_term):
     return render_template('index.html', search_term=search_term)
 
 
+@app.route('/tagged/<string:tag>')
+def tag(tag):
+    return render_template('index.html', tag=tag)
+
+
 @app.route('/<string:album>')
 def album(album):
     url = f'{API_HOST}v1/albums/{album}'

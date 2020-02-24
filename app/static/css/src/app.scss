@@ -1,5 +1,6 @@
 $headerHeight: 60px;
 $primaryTextColor: #222;
+$secondaryTextColor: #999;
 $inputPlaceholderTextColor: #DEDEDE;
 
 body {
@@ -23,7 +24,7 @@ body {
   height: $headerHeight;
 }
 
-.albumTitle {
+.galleryTitle {
   height: $headerHeight;
   display: flex;
   flex-flow: row nowrap;
@@ -151,16 +152,16 @@ body {
 }
 
 .contentCover {
-  bottom: 0px;
+  height: 100%;
   left: 0px;
   position: absolute;
-  right: 0px;
   top: 0px;
+  width: 100%;
   z-index: 1;
 }
 
 .content {
-  margin-top: 55px;
+  margin-top: $headerHeight;
   z-index: 0;
 
   .item {
@@ -170,4 +171,15 @@ body {
 
 .pageText {
   padding: 10px;
+}
+
+.photoCount {
+  text-align: center;
+  color: $secondaryTextColor;
+}
+
+.loading {
+  color: $secondaryTextColor;
+  margin: 20px;
+  text-align: center;
 }

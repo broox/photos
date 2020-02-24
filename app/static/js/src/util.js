@@ -28,3 +28,12 @@ function getBrowserHeight() {
 function isLargeViewport() {
   return getBrowserWidth() > 500;
 }
+
+
+function pluralize(number, word) {
+  if (number == 1){
+    return word;
+  } else {
+    return word+'s';
+  }
+};
