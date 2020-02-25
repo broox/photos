@@ -54,19 +54,12 @@ var PhotoSwipeUI_Default =
 			loadingIndicatorDelay: 1000, // 2s
 			
 			addCaptionHTMLFn: function(item, captionEl /*, isFake */) {
-				var elements = [];
-				if (item.title) {
-					elements.push(item.title);
-				}
-				if (item.tags) {
-					elements.push(item.tags);
-				}
-				if (item.date) {
-					elements.push(item.date);
-				}
-
-				captionEl.children[0].innerHTML = elements.join('<br>');
-				return elements.length > 0;
+				// if(!item.title) {
+				// 	captionEl.children[0].innerHTML = '';
+				// }
+				captionEl.children[0].innerHTML = item.title;
+				captionEl.children[1].innerHTML = item.tags;
+				return (item.title || item.tags);
 			},
 
 			closeEl:true,
@@ -113,6 +106,7 @@ var PhotoSwipeUI_Default =
 			if(_blockControlsTap) {
 				return true;
 			}
+
 
 			e = e || window.event;
 
@@ -353,7 +347,6 @@ var PhotoSwipeUI_Default =
 					if(!_fakeCaptionContainer) {
 						_fakeCaptionContainer = framework.createEl('pswp__caption pswp__caption--fake');
 						_fakeCaptionContainer.appendChild( framework.createEl('pswp__caption__center') );
-						// _fakeCaptionContainer.appendChild( framework.createEl('pswp__caption__center') );
 						_controls.insertBefore(_fakeCaptionContainer, _captionContainer);
 						framework.addClass(_controls, 'pswp__ui--fit');
 					}

@@ -5,6 +5,7 @@ function buildQueryString(params) {
     .join('&');
 }
 
+
 function getBrowserWidth() {
   return Math.max(
     document.body.scrollWidth,
@@ -14,6 +15,7 @@ function getBrowserWidth() {
     document.documentElement.clientWidth
   );
 }
+
 
 function getBrowserHeight() {
   return Math.max(
@@ -25,9 +27,11 @@ function getBrowserHeight() {
   );
 }
 
+
 function isLargeViewport() {
   return getBrowserWidth() > 500;
 }
+
 
 
 function pluralize(number, word) {
@@ -37,6 +41,51 @@ function pluralize(number, word) {
     return word+'s';
   }
 };
+
+
+function relativeTime(datetime) {
+  const now = new Date();
+  const elapsed = now - datetime;
+  const msPerMinute = 60 * 1000;
+  const msPerHour = msPerMinute * 60;
+  const msPerDay = msPerHour * 24;
+  const msPerMonth = msPerDay * 30;
+  const msPerYear = msPerDay * 365;
+
+  if (elapsed < msPerMinute) {
+    const seconds = Math.round(elapsed / 1000);
+    return seconds + pluralize(seconds, ' second') + ' ago';
+  }
+
+  if (elapsed < msPerHour) {
+    const minutes = Math.round(elapsed / msPerMinute),
+          text = pluralize(minutes, 'minute');
+    return `${minutes} ${text} ago`;
+  }
+
+  if (elapsed < msPerDay) {
+    const hours = Math.round(elapsed / msPerHour),
+          text = pluralize(hours, 'hour');
+    return `${hours} ${text} ago`;
+  }
+
+  if (elapsed < msPerMonth) {
+    const days = Math.round(elapsed / msPerDay),
+          text = pluralize(days, 'day');
+    return `${days} ${text} ago`;
+  }
+
+  if (elapsed < msPerYear) {
+    const months = Math.round(elapsed/msPerMonth),
+          text = pluralize(months, 'month');
+    return `${months} ${text} ago`;
+  }
+
+  const years = Math.round(elapsed / msPerYear),
+        text = pluralize(years, 'year');
+
+  return `${years} ${text} ago`;
+}
 const Album = {
   fetchIndex(options) {
     const defaults = {
@@ -57,7 +106,6 @@ const Photo = {
       limit: 40,
       offset: 0
     };
-
     const params = Object.assign(defaults, options);
     return fetch('/api/v1/photos?' + buildQueryString(params))
       .then(response => {
@@ -74,12 +122,17 @@ function serializeForPhotoSwipe(photo) {
   }
 
   const tags = photo.tags;
-  let description = photo.description;
+  let tagString = '';
   if (tags) {
-    description += '<br>';
     for (let i = 0; i < tags.length; i++) {
-      description += ' <a href="/tagged/'+tags[i].slug+'">#'+tags[i].name.replace(/\s/g, '')+'</a>';
+      tagString += ' <a href="/tagged/'+tags[i].slug+'">#'+tags[i].name.replace(/\s/g, '')+'</a>';
     }
+  }
+
+  const photoDate = photo.taken_at || photo.created_at;
+  let time = null;
+  if (photoDate) {
+    time = relativeTime(Date.parse(photoDate));
   }
 
   return {
@@ -87,9 +140,11 @@ function serializeForPhotoSwipe(photo) {
     src: src,
     w: photo.width,
     h: photo.height,
+    date: time,
     msrc: thumbnail,
-    title: description,
-    thumbnail: thumbnail
+    title: photo.description,
+    tags: tagString,
+    thumbnail: thumbnail,
   }
   // todo: album, camera, tags, etc
 }
@@ -197,7 +252,7 @@ const photosMixin = {
         .catch(err => {
           this.message = 'Error loading photos';
           this.loading = false;
-          console.error('Error fetching photos');
+          console.error('Error fetching photos.', err);
         });
     },
     loadPhotos() {
@@ -264,7 +319,7 @@ const photosMixin = {
       if (this.album) {
         url += '/'+this.album.slug;
         title = this.album.title;
-      } else if (this.search) { 
+      } else if (this.search) {
         const search = encodeURIComponent(this.search)
         url += '/search/'+search;
         title = search;
@@ -291,6 +346,8 @@ const photosMixin = {
 
           return {x:rect.left, y:rect.top + pageYScroll, w:rect.width};
         },
+        fullscreenEl: false,
+        shareEl: false,
         shareButtons: [
           { id:'download', label:'Download image', url:'{{raw_image_url}}', download:true }
         ],
@@ -313,9 +370,6 @@ const photosMixin = {
     }
   }
 };
-
-// TODO: fix template title conditional
-// TODO: emit events
 
 Vue.component('Search', {
   props: [
@@ -358,14 +412,12 @@ Vue.component('Search', {
       }
     },
     input(value) {
-      // Enable realtime search
+      // Enable realtime search when input value changes
       this.dropRealtimeResults = false;
     }
   },
   methods: {
     clearRealtimeSearchResults(event) {
-      // event.preventDefault();
-      // event.stopPropagation();
       this.albums = [];
     },
     clearSearch() {
@@ -396,8 +448,6 @@ Vue.component('Search', {
         limit: 15,
         search: query
       };
-
-      // this.returnAlbums = true;
 
       const lastAlbumQuery = query;
       return Album.fetchIndex(params)

@@ -1,6 +1,3 @@
-// TODO: fix template title conditional
-// TODO: emit events
-
 Vue.component('Search', {
   props: [
     'initQuery',
@@ -42,14 +39,12 @@ Vue.component('Search', {
       }
     },
     input(value) {
-      // Enable realtime search
+      // Enable realtime search when input value changes
       this.dropRealtimeResults = false;
     }
   },
   methods: {
     clearRealtimeSearchResults(event) {
-      // event.preventDefault();
-      // event.stopPropagation();
       this.albums = [];
     },
     clearSearch() {
@@ -80,8 +75,6 @@ Vue.component('Search', {
         limit: 15,
         search: query
       };
-
-      // this.returnAlbums = true;
 
       const lastAlbumQuery = query;
       return Album.fetchIndex(params)

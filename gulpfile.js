@@ -20,12 +20,16 @@ gulp.task('concatenate-css-libraries', () => {
 });
 
 gulp.task('concatenate-js-libraries', () => {
-  return gulp.src([
+  const minified = gulp.src([
     './app/static/js/lib/vue.min.js',
     './app/static/js/lib/flex-images.min.js',
     './app/static/js/lib/photoswipe.min.js',
-    './app/static/js/lib/photoswipe-ui.min.js',
-  ])
+  ]);
+
+  const bigBoys = gulp.src('./app/static/js/lib/photoswipe-ui.js')
+  .pipe(terser());
+
+  return merge(minified, bigBoys)
   .pipe(concat('lib.min.js'))
   .pipe(gulp.dest('./app/static/js'));
 });

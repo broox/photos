@@ -6,12 +6,17 @@ function serializeForPhotoSwipe(photo) {
   }
 
   const tags = photo.tags;
-  let description = photo.description;
+  let tagString = '';
   if (tags) {
-    description += '<br>';
     for (let i = 0; i < tags.length; i++) {
-      description += ' <a href="/tagged/'+tags[i].slug+'">#'+tags[i].name.replace(/\s/g, '')+'</a>';
+      tagString += ' <a href="/tagged/'+tags[i].slug+'">#'+tags[i].name.replace(/\s/g, '')+'</a>';
     }
+  }
+
+  const photoDate = photo.taken_at || photo.created_at;
+  let time = null;
+  if (photoDate) {
+    time = relativeTime(Date.parse(photoDate));
   }
 
   return {
@@ -19,9 +24,11 @@ function serializeForPhotoSwipe(photo) {
     src: src,
     w: photo.width,
     h: photo.height,
+    date: time,
     msrc: thumbnail,
-    title: description,
-    thumbnail: thumbnail
+    title: photo.description,
+    tags: tagString,
+    thumbnail: thumbnail,
   }
   // todo: album, camera, tags, etc
 }
@@ -92,7 +99,7 @@ const photosMixin = {
         filters['album_id'] = this.album.id;
       }
 
-      if (this.search) {}
+      if (this.search) {
         filters['search'] = this.search;
       }
 
@@ -129,7 +136,7 @@ const photosMixin = {
         .catch(err => {
           this.message = 'Error loading photos';
           this.loading = false;
-          console.error('Error fetching photos');
+          console.error('Error fetching photos.', err);
         });
     },
     loadPhotos() {
@@ -223,6 +230,8 @@ const photosMixin = {
 
           return {x:rect.left, y:rect.top + pageYScroll, w:rect.width};
         },
+        fullscreenEl: false,
+        shareEl: false,
         shareButtons: [
           { id:'download', label:'Download image', url:'{{raw_image_url}}', download:true }
         ],
