@@ -37,6 +37,35 @@ function pluralize(number, word) {
     return word+'s';
   }
 };
+const Album = {
+  fetchIndex(options) {
+    const defaults = {
+      limit: 40,
+      offset: 0
+    };
+    const params = Object.assign(defaults, options);
+    return fetch('/api/v1/albums?' + buildQueryString(params))
+      .then(response => {
+        return response.json();
+      });
+  }
+};
+
+const Photo = {
+  fetchIndex(options) {
+    const defaults = {
+      limit: 40,
+      offset: 0
+    };
+
+    const params = Object.assign(defaults, options);
+    return fetch('/api/v1/photos?' + buildQueryString(params))
+      .then(response => {
+        return response.json();
+      })
+  }
+};
+
 function serializeForPhotoSwipe(photo) {
   const thumbnail = isLargeViewport() ? photo.images.medium : photo.images.small;
   let src = photo.images.medium;
@@ -68,18 +97,16 @@ function serializeForPhotoSwipe(photo) {
 const photosMixin = {
   data: {
     album: null,
-    albums: [],
     cachedPhotos: [],
     cachedPhotoAmount: 0,
-    fullSearch: false,   // whether we are performing a full search after a form submit
     limit: 40,           // page size
     loading: false,
     photos: [],
     offset: 0,           // paging
     pageText: null,      // for album descriptions
     photoRowHeight: 200,
-    searchInput: null,   // what is typed into the input form
-    searchTerm: null,    // the currently active search
+    search: null,        // the currently active search
+    showModal: false,
     tag: null,
     title: null,
     totalPhotoCount: 0
@@ -90,9 +117,6 @@ const photosMixin = {
     }
   },
   computed: {
-    showRealtimeSearchResults() {
-      return this.albums.length > 0 && !this.album && !this.tag;
-    },
     photoCountDisplay() {
       const photoCount = this.totalPhotoCount;
       if (photoCount) {
@@ -102,7 +126,7 @@ const photosMixin = {
   },
   methods: {
     addPhotosToGallery(photos) {
-      const photoSwipePhotos = photos.map(serializeForPhotoSwipe)
+      const photoSwipePhotos = photos.map(serializeForPhotoSwipe);
       this.photos.push(...photoSwipePhotos);
     },
     clearAlbum() {
@@ -117,21 +141,6 @@ const photosMixin = {
       } else if (this.tag) {
         this.clearTag();
       }
-    },
-    clearRealtimeSearchResults(event) {
-      // event.preventDefault();
-      // event.stopPropagation();
-      this.albums = [];
-    },
-    clearSearch() {
-      this.searchTerm = null;
-    },
-    clearSearchForm() {
-      this.searchInput = null;
-      this.clearRealtimeSearchResults();
-      this.clearSearch();
-      this.resetPage();
-      return this.loadPhotos();
     },
     clearTag() {
       this.tag = null;
@@ -151,8 +160,8 @@ const photosMixin = {
         filters['album_id'] = this.album.id;
       }
 
-      if (this.searchTerm) {
-        filters['search'] = this.searchTerm;
+      if (this.search) {
+        filters['search'] = this.search;
       }
 
       if (this.tag) {
@@ -172,10 +181,7 @@ const photosMixin = {
         cacheHomePage = true;
       }
 
-      return fetch('/api/v1/photos?' + buildQueryString(Object.assign(params,filters)))
-        .then(response => {
-          return response.json();
-        })
+      return Photo.fetchIndex(Object.assign(params,filters))
         .then(data => {
           const photos = data.data;
           this.totalPhotoCount = data.meta.count;
@@ -207,20 +213,6 @@ const photosMixin = {
         return;
       return this.loadPhotos();
     },
-    realtimeSearch(event) {
-
-      if (this.lastSearchTerm == this.searchInput) {
-        return;
-      }
-
-      if (this.searchInput.length > 2 && event.key !== 'Enter') {
-        this.searchAlbums(this.searchInput);
-        this.lastSearchTerm = this.searchInput;
-      } else {
-        this.clearRealtimeSearchResults();
-        this.lastSearchTerm = null;
-      }
-    },
     renderGallery() {
       new flexImages({ selector: '.flex-images', rowHeight: this.photoRowHeight });
       if (this.offset < this.totalPhotoCount) {
@@ -234,49 +226,15 @@ const photosMixin = {
       this.totalPhotoCount = 0;
       window.scrollTo(0, 0);
     },
-    searchAlbums(term) {
-      this.message = 'Loading...';
-      this.loading = true;
-      const params = {
-        limit: 15,
-        search: term
-      };
-
-      const lastSearch = term;
-      return fetch('/api/v1/albums?' + buildQueryString(params))
-      .then(response => {
-        return response.json();
-      })
-      .then(data => {
-        if (this.fullSearch || lastSearch !== term) {
-          return;
-        }
-        const albums = data.data;
-        this.albums = albums;
-        this.message = null;
-        this.loading = false;
-      })
-      .catch(err => {
-        this.message = 'Error loading albums';
-        this.loading = false;
-        console.error('Error fetching albums');
-      });
-    },
-    searchPhotos() {
-      this.clearRealtimeSearchResults();
+    searchPhotos(query) {
+      this.search = query;
       this.resetPage();
-      this.searchTerm = this.searchInput;
-      this.fullSearch = true;
-      this.loadPhotos().then(() => {
-        this.fullSearch = false;
-      });
+      this.loadPhotos();
     },
     selectAlbum(album) {
-      // keep this.albums set so that the search results are retained
-      // when the user goes back
       this.album = album;
+      this.search = null;
       this.title = album.title;
-      this.clearSearch();
       this.resetPage();
       if (this.album.description) {
         this.pageText = this.album.description;
@@ -284,9 +242,9 @@ const photosMixin = {
       return this.loadPhotos();
     },
     selectTag(tag) {
+      this.search = null;
       this.tag = tag;
       this.title = tag;
-      this.clearSearch();
       this.resetPage();
       return this.loadPhotos();
     },
@@ -296,10 +254,8 @@ const photosMixin = {
         thumbnails[i].onclick = this.openSlideShow;
       }
     },
-    syncSearchForm() {
-      if (this.searchInput !== this.searchTerm) {
-        this.searchInput = this.searchTerm;
-      }
+    toggleModal(visible) {
+      this.showModal = visible;
     },
     updateGalleryURL() {
       let url = window.location.origin;
@@ -308,10 +264,10 @@ const photosMixin = {
       if (this.album) {
         url += '/'+this.album.slug;
         title = this.album.title;
-      } else if (this.searchTerm) {
-        const searchTerm = encodeURIComponent(this.searchTerm)
-        url += '/search/'+searchTerm;
-        title = searchTerm;
+      } else if (this.search) { 
+        const search = encodeURIComponent(this.search)
+        url += '/search/'+search;
+        title = search;
       } else if (this.tag) {
         url += '/tagged/'+this.tag;
         title = this.tag;
@@ -357,6 +313,124 @@ const photosMixin = {
     }
   }
 };
+
+// TODO: fix template title conditional
+// TODO: emit events
+
+Vue.component('Search', {
+  props: [
+    'initQuery',
+    'modal'
+  ],
+  data: () => {
+    return {
+      albums: [],
+      dropRealtimeResults: false, // prevent race conditions on full page / photo searches
+      input: null,                // value displayed in the input form
+      lastQuery: null,
+      query: null,                // the currently active search
+    }
+  },
+  computed: {
+    showRealtimeSearchResults() {
+      const visible = this.albums.length > 0;
+      this.$emit('modal', visible);
+      return visible;
+    },
+  },
+  created() {
+    document.onkeydown = (event) => {
+      if (event.key === 'Escape') {
+          this.clearRealtimeSearchResults();
+      }
+    }    
+  },
+  watch: {
+    initQuery(query) {
+      if (query !== this.query) {
+        this.query = query;
+        this.syncSearchForm();
+      }
+    },
+    modal(visible) {
+      if (!visible) {
+        this.clearRealtimeSearchResults();
+      }
+    },
+    input(value) {
+      // Enable realtime search
+      this.dropRealtimeResults = false;
+    }
+  },
+  methods: {
+    clearRealtimeSearchResults(event) {
+      // event.preventDefault();
+      // event.stopPropagation();
+      this.albums = [];
+    },
+    clearSearch() {
+      this.query = null;
+    },
+    clearSearchForm() {
+      this.input = null;
+      this.clearRealtimeSearchResults();
+      this.clearSearch();
+      this.$emit('query', this.query);
+    },
+    realtimeSearch(event) {
+      if (this.lastQuery == this.input) {
+        return;
+      }
+
+      if (this.input.length > 2 && event.key !== 'Enter') {
+        this.searchAlbums(this.input);
+        this.lastQuery = this.input;
+      } else {
+        this.clearRealtimeSearchResults();
+        this.lastQuery = null;
+      }
+    },
+    searchAlbums(query) {
+      this.$emit('loading', true);
+      const params = {
+        limit: 15,
+        search: query
+      };
+
+      // this.returnAlbums = true;
+
+      const lastAlbumQuery = query;
+      return Album.fetchIndex(params)
+        .then(data => {
+          if (this.dropRealtimeResults || lastAlbumQuery !== query) {
+            return;
+          }
+          this.albums = data.data;
+          // TODO: emit albums?
+          this.$emit('loading', false);
+        })
+        .catch(err => {
+          this.$emit('loading', false);
+          console.error('Error fetching albums');
+        });
+    },
+    searchPhotos() {
+      this.clearRealtimeSearchResults();
+      this.query = this.input;
+      this.dropRealtimeResults = true;  
+      this.$emit('query', this.query);
+    },
+    selectAlbum(album) {
+      this.$emit('album', album);
+    },
+    syncSearchForm() {
+      if (this.query && this.input !== this.query) {
+        this.input = this.query;
+      }
+    },
+  }
+});
+
 const app = new Vue({
   el: '#app',
   data: {
@@ -374,8 +448,3 @@ window.onscroll = () => {
     header.classList.remove("sticky");
   }
 };
-document.onkeydown = (event) => {
-  if (event.key === 'Escape') {
-      app.clearRealtimeSearchResults();
-  }
-}

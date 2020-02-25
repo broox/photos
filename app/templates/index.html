@@ -7,6 +7,7 @@
     <title>Photos</title>
     <script src="/static/js/lib.min.js?20-2-24"></script>
     <link rel="stylesheet" href="/static/css/lib.css?20-2-24">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
   </head>
 
   <body>
@@ -17,28 +18,30 @@
             <i class="fas fa-chevron-left back" v-on:click="clearGallery"></i>
             <h1>{{ title }}</h1>
           </div>
-          <form class="wrap" v-on:submit.prevent="searchPhotos" v-show="!title">
-            <div class="search">
-              <input type="text" class="searchInput" placeholder="Search Broox Photos" autocorrect="off" autocapitalize="off" v-model="searchInput" v-on:input="realtimeSearch" v-on:paste="realtimeSearch" v-on:blur="syncSearchForm">
-              <button type="submit" class="searchButton" v-show="!searchTerm">
-                <i class="fas fa-search"></i>
-              </button>
-              <button type="button" class="clearSearch" v-show="searchTerm" v-on:click="clearSearchForm">
-                <i class="fas fa-times"></i>
-              </button>
-            </div>
-            <div class="searchResults" v-show="showRealtimeSearchResults">
-              <ul>
-                <li v-for="album in albums" v-on:click="selectAlbum(album)"><i class="fas fa-images"></i> {{album.title}}</li>
-                <!-- <li><i class="fas fa-tag"></i> Derek Brooks</li> -->
-              </ul>
-            </div>
-          </form>
+
+          <search inline-template :init-query="search" :modal="showModal" v-on:modal="toggleModal" v-on:album="selectAlbum" v-on:query="searchPhotos" v-show="!title">
+            <form class="wrap" v-on:submit.prevent="searchPhotos">
+              <div class="search">
+                <input type="text" class="searchInput" placeholder="Search Broox Photos" autocorrect="off" autocapitalize="off" v-model="input" v-on:input="realtimeSearch" v-on:paste="realtimeSearch" v-on:blur="syncSearchForm">
+                <button type="submit" class="searchButton" v-show="!query">
+                  <i class="fas fa-search"></i>
+                </button>
+                <button type="button" class="clearSearch" v-show="query" v-on:click="clearSearchForm">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              <div class="searchResults" v-show="showRealtimeSearchResults" v-cloak>
+                <ul>
+                  <li v-for="album in albums" v-on:click="selectAlbum(album)"><i class="fas fa-images"></i> {{album.title}}</li>
+                  <!-- <li><i class="fas fa-tag"></i> Derek Brooks</li> -->
+                </ul>
+              </div>
+            </form>
+          </search>
         </div>
 
-        <!-- TODO: footer -->
         <!-- {{ message }} -->
-        <div class="contentCover" v-show="showRealtimeSearchResults" v-on:click="clearRealtimeSearchResults"></div>
+        <div class="contentCover" v-show="showModal" v-on:click="toggleModal(false)"></div>
         <div class="flex-images content">
           <div class="pageText" v-show="pageText" v-html="pageText"></div>
           <p class="photoCount" v-show="totalPhotoCount">{{photoCountDisplay}}</p>
@@ -96,8 +99,7 @@
         const album = {{ album|tojson }};
         app.selectAlbum(album);
       {%- elif search_term %}
-        app.searchInput = '{{search_term}}';
-        app.searchPhotos();
+        app.searchPhotos('{{search_term}}');
       {%- elif tag %}
         app.selectTag('{{ tag }}');
       {%- else %}

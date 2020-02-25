@@ -15,8 +15,3 @@ window.onscroll = () => {
     header.classList.remove("sticky");
   }
 };
-document.onkeydown = (event) => {
-  if (event.key === 'Escape') {
-      app.clearRealtimeSearchResults();
-  }
-}

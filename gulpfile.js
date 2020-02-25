@@ -35,7 +35,10 @@ gulp.task('jslib', ['concatenate-css-libraries', 'concatenate-js-libraries']);
 gulp.task('js', () => {
   return gulp.src([
     './app/static/js/src/util.js',
+    './app/static/js/src/album.js',
+    './app/static/js/src/photo.js',
     './app/static/js/src/photos-mixin.js',
+    './app/static/js/src/search.js',
     './app/static/js/src/app.js',
   ])
   .pipe(concat('app.combined.js'))
