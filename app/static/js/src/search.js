@@ -23,10 +23,45 @@ Vue.component('Search', {
       return visible;
     },
     realtimeResults() {
+      const displayLimit = 10;
       const albums = this.albums.map((album) => { return { type: ALBUM, display: album.title, album: album } });
-      const tags = this.tags.map((tag) => { return { type: TAG, display: tag.name, tag: tag } });
-      const results = tags.concat(albums);
-      return results.slice(0, 10);
+      let tags = this.tags.map((tag) => { return { type: TAG, display: tag.name, tag: tag } });
+
+      const totalItems = this.albumCount + this.tagCount;
+      const halfLimit = 5;
+      if (totalItems > displayLimit && this.tagCount > halfLimit) {
+        let tagLimit;
+        if (this.tagCount > halfLimit && this.albumCount > halfLimit) {
+          tagLimit = halfLimit;
+        } else {
+          tagLimit = displayLimit - this.albumCount
+        }
+        tags = tags.slice(0, tagLimit);
+      }
+
+      const results = tags.concat(albums).slice(0, displayLimit);
+      const displayedAlbums = results.filter(result => result.type === ALBUM);
+      const displayedTags = results.filter(result => result.type === TAG);
+      const remainingResults = [];
+
+      if (this.tagCount > displayedTags.length) {
+        const remainingTags = this.tagCount - displayedTags.length;
+        remainingResults.push(remainingTags + ' ' + pluralize(remainingTags, ('more tag')));
+      }
+
+      if (this.albumCount > displayedAlbums.length) {
+        const remainingAlbums = this.albumCount - displayedAlbums.length;
+        remainingResults.push(remainingAlbums + ' ' + pluralize(remainingAlbums, ('more album')));
+      }
+
+      console.log(remainingResults);
+      if (remainingResults) {
+        results.push({
+          type: 'summary',
+          display: remainingResults.join(' and ')
+        });
+      }
+      return results;
     }
   },
   created() {
@@ -94,6 +129,7 @@ Vue.component('Search', {
             return;
           }
           this.albums = data.data;
+          this.albumCount = data.meta.count;
           // TODO: emit albums?
         })
         .catch(err => {
@@ -119,6 +155,7 @@ Vue.component('Search', {
             return;
           }
           this.tags = data.data;
+          this.tagCount = data.meta.count;
           // TODO: emit tags?
         })
         .catch(err => {

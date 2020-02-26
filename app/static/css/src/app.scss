@@ -123,6 +123,12 @@ body {
       text-overflow: ellipsis;
       white-space: nowrap;
 
+      &.summary {
+        color: $inputPlaceholderTextColor;
+        font-size: 0.9em;
+        text-align: center;
+      }
+
       &:hover {
         background-color: #eee;
       }

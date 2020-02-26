@@ -19,7 +19,7 @@
             <h1>{{ title }}</h1>
           </div>
 
-          <search inline-template :init-query="search" :modal="showModal" v-on:modal="toggleModal" v-on:album="selectAlbum" v-on:query="searchPhotos" v-show="!title">
+          <search inline-template :init-query="search" :modal="showModal" v-on:modal="toggleModal" v-on:album="selectAlbum" v-on:query="searchPhotos" v-on:tag="selectTag" v-show="!title">
             <form class="wrap" v-on:submit.prevent="searchPhotos">
               <div class="search">
                 <input type="text" class="searchInput" placeholder="Search Broox Photos" autocorrect="off" autocapitalize="off" v-model="input" v-on:input="realtimeSearch" v-on:paste="realtimeSearch" v-on:blur="syncSearchForm">
@@ -32,8 +32,11 @@
               </div>
               <div class="searchResults" v-show="showRealtimeSearchResults" v-cloak>
                 <ul>
-                  <li v-for="album in albums" v-on:click="selectAlbum(album)"><i class="fas fa-images"></i> {{album.title}}</li>
-                  <!-- <li><i class="fas fa-tag"></i> Derek Brooks</li> -->
+                  <li v-for="result in realtimeResults" v-on:click="selectRealtimeSearch(result)" :class="result.type">
+                    <i class="fas fa-tag" v-if="result.type == 'tag'"></i>
+                    <i class="fas fa-images"v-if="result.type == 'album'"></i>
+                    {{ result.display }}
+                  </li>
                 </ul>
               </div>
             </form>
@@ -42,7 +45,7 @@
 
         <!-- {{ message }} -->
         <div class="contentCover" v-show="showModal" v-on:click="toggleModal(false)"></div>
-        <div class="flex-images content">
+        <div class="flex-images content" v-cloak>
           <div class="pageText" v-show="pageText" v-html="pageText"></div>
           <p class="photoCount" v-show="totalPhotoCount">{{photoCountDisplay}}</p>
           <!-- <div class="albums"></div> -->
@@ -97,12 +100,11 @@
     <script src="/static/js/app.combined.js?20-2-24"></script>
     <script type="text/javascript">
       {%- if album %}
-        const album = {{ album|tojson }};
-        app.selectAlbum(album);
+        app.selectAlbum({{ album|tojson }});
       {%- elif search_term %}
         app.searchPhotos('{{search_term}}');
       {%- elif tag %}
-        app.selectTag('{{ tag }}');
+        app.selectTag({{ tag|tojson }});
       {%- else %}
         app.loadPhotos();
       {%- endif %}
