@@ -209,7 +209,7 @@ const photosMixin = {
         title = search;
       } else if (this.tag) {
         url += '/tagged/'+this.tag.slug;
-        title = this.tag;
+        title = this.tag.name;
       }
 
       document.title = title;
