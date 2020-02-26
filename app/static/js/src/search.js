@@ -1,3 +1,6 @@
+const ALBUM = 'album';
+const TAG = 'tag';
+
 Vue.component('Search', {
   props: [
     'initQuery',
@@ -10,6 +13,7 @@ Vue.component('Search', {
       input: null,                // value displayed in the input form
       lastQuery: null,
       query: null,                // the currently active search
+      tags: [],
     }
   },
   computed: {
@@ -18,6 +22,12 @@ Vue.component('Search', {
       this.$emit('modal', visible);
       return visible;
     },
+    realtimeResults() {
+      const albums = this.albums.map((album) => { return { type: ALBUM, display: album.title, album: album } });
+      const tags = this.tags.map((tag) => { return { type: TAG, display: tag.name, tag: tag } });
+      const results = tags.concat(albums);
+      return results.slice(0, 10);
+    }
   },
   created() {
     document.onkeydown = (event) => {
@@ -46,6 +56,7 @@ Vue.component('Search', {
   methods: {
     clearRealtimeSearchResults(event) {
       this.albums = [];
+      this.tags = [];
     },
     clearSearch() {
       this.query = null;
@@ -62,6 +73,7 @@ Vue.component('Search', {
       }
 
       if (this.input.length > 2 && event.key !== 'Enter') {
+        this.searchTags(this.input);
         this.searchAlbums(this.input);
         this.lastQuery = this.input;
       } else {
@@ -70,9 +82,8 @@ Vue.component('Search', {
       }
     },
     searchAlbums(query) {
-      this.$emit('loading', true);
       const params = {
-        limit: 15,
+        limit: 10,
         search: query
       };
 
@@ -84,11 +95,9 @@ Vue.component('Search', {
           }
           this.albums = data.data;
           // TODO: emit albums?
-          this.$emit('loading', false);
         })
         .catch(err => {
-          this.$emit('loading', false);
-          console.error('Error fetching albums');
+          console.error('Error fetching albums', err);
         });
     },
     searchPhotos() {
@@ -97,8 +106,33 @@ Vue.component('Search', {
       this.dropRealtimeResults = true;  
       this.$emit('query', this.query);
     },
-    selectAlbum(album) {
-      this.$emit('album', album);
+    searchTags(query) {
+      const params = {
+        limit: 10,
+        search: query
+      };
+
+      const lastTagQuery = query;  // TODO: move to lastRealtimeQuery?
+      return Tag.fetchIndex(params)
+        .then(data => {
+          if (this.dropRealtimeResults || lastTagQuery !== query) {
+            return;
+          }
+          this.tags = data.data;
+          // TODO: emit tags?
+        })
+        .catch(err => {
+          console.error('Error fetching tags', err);
+        });
+    },
+    selectRealtimeSearch(result) {
+      if (result.type === ALBUM) {
+        return this.$emit(ALBUM, result.album);
+      }
+
+      if (result.type === TAG) {
+        return this.$emit(TAG, result.tag);
+      }
     },
     syncSearchForm() {
       if (this.query && this.input !== this.query) {

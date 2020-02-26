@@ -104,7 +104,7 @@ const photosMixin = {
       }
 
       if (this.tag) {
-        filters['tag'] = this.tag;
+        filters['tag'] = this.tag.slug;
       }
 
       let cacheHomePage = false;
@@ -183,7 +183,7 @@ const photosMixin = {
     selectTag(tag) {
       this.search = null;
       this.tag = tag;
-      this.title = tag;
+      this.title = `#${tag.name.replace(/\s/g, '')}`;
       this.resetPage();
       return this.loadPhotos();
     },
@@ -208,7 +208,7 @@ const photosMixin = {
         url += '/search/'+search;
         title = search;
       } else if (this.tag) {
-        url += '/tagged/'+this.tag;
+        url += '/tagged/'+this.tag.slug;
         title = this.tag;
       }
 

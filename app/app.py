@@ -31,7 +31,13 @@ def search(search_term):
 
 @app.route('/tagged/<string:tag>')
 def tag(tag):
-    return render_template('index.html', tag=tag)
+    url = f'{API_HOST}v1/tags/{tag}'
+    app.logger.info(f'Loading tag {url}')
+    response = get(url, verify=VERIFY_SSL)
+    if response:
+        return render_template('index.html', tag=response.json())
+    else:
+        return render_template('index.html')
 
 
 @app.route('/<string:album>')
