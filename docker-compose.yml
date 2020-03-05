@@ -1,10 +1,12 @@
-version: '2'
+version: '3'
 services:
-  web:
-    build: .  # use Dockerfile
+  server:
+    build:
+      context: ./
+      dockerfile: production.dockerfile
+    command: python3 /app/app.py
     environment:
       - FLASK_ENV=production
-
       - VIRTUAL_HOST=photos.broox.com
       - LETSENCRYPT_HOST=photos.broox.com
       - LETSENCRYPT_EMAIL=derek@broox.com
@@ -13,8 +15,6 @@ services:
     ports:
       - "5000:5000"
     restart: always
-    volumes:
-      - ./app:/app
     networks:
       - default
 
