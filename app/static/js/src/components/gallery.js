@@ -33,22 +33,38 @@ function serializeForPhotoSwipe(photo) {
   // todo: album, camera, tags, etc
 }
 
-const photosMixin = {
-  data: {
-    album: null,
-    cachedPhotos: [],
-    cachedPhotoAmount: 0,
-    limit: 40,           // page size
-    loading: false,
-    photos: [],
-    offset: 0,           // paging
-    pageText: null,      // for album descriptions
-    photoRowHeight: 200,
-    search: null,        // the currently active search
-    showModal: false,
-    tag: null,
-    title: null,
-    totalPhotoCount: 0
+const Gallery = Vue.component('Gallery', {
+//const Gallery = {
+  template: `
+    <div>
+      <div class="pageText" v-show="pageText" v-html="pageText"></div>
+      <p class="photoCount" v-show="totalPhotoCount">{{photoCountDisplay}}</p>
+      <div class="flex-images">
+        <div v-for="(photo, index) in photos" class="item" :id="photo.id" :data-w="photo.w" :data-h="photo.h" :data-index="index">
+          <img :src="photo.thumbnail" :alt="photo.title"/>
+        </div>
+      </div>
+      <div class="loading" v-show="loading"><i class="fa fa-spin fa-spinner"></i></div>
+    </div>
+  `,
+  data: () => {
+    return {
+      // global: GlobalStore,
+      cachedPhotos: [],
+      cachedPhotoAmount: 0,
+      limit: 40,           // page size
+      loading: false,
+      // photos: [],
+      offset: 0,           // paging
+      pageText: null,      // for album descriptions
+      photoRowHeight: 200,
+      showModal: false,
+      totalPhotoCount: 0,
+
+      // album: null,
+      // query: null,
+      // tag: null,
+    }
   },
   created() {
     if (isLargeViewport()) {
@@ -59,35 +75,68 @@ const photosMixin = {
     photoCountDisplay() {
       const photoCount = this.totalPhotoCount;
       if (photoCount) {
-        return photoCount.toLocaleString() + ' ' + pluralize(photoCount, 'photo');
+        return pluralize(photoCount, 'photo');
       }
-    }
+    },
+    album() {
+      return this.$store.state.album;
+    },
+    page() {
+      return this.$store.state.page;
+    },
+    photos() {
+      return this.$store.state.photos;
+    },
+    query() {
+      return this.$store.state.query;
+    },
+    tag() {
+      return this.$store.state.tag;
+    },
+  },
+  watch: {
+    'album': function(album) {
+      if (album != null) {
+        this.resetPage();
+        // this.album = album;
+        if (album.description) {
+          this.pageText = album.description;
+        }
+        this.loadPhotos();
+      }
+    },
+    'page': function(page) {
+      if (page == pages.HOME) {
+        this.resetPage();
+        this.loadPhotos();
+      }
+    },
+    'tag': function(tag) {
+      if (tag != null) {
+        this.resetPage();
+        // this.tag = tag;
+        this.loadPhotos();
+      }
+    },
+    'query': function(query) {
+      if (query != null) {
+        this.resetPage();
+        // this.query = query;
+        this.loadPhotos();
+      }
+    },
   },
   methods: {
     addPhotosToGallery(photos) {
       const photoSwipePhotos = photos.map(serializeForPhotoSwipe);
-      this.photos.push(...photoSwipePhotos);
+      this.$store.dispatch('pushPhotos', photoSwipePhotos);
+      // this.photos.push(...photoSwipePhotos);
     },
-    clearAlbum() {
-      this.album = null;
-      this.resetPage();
-      return this.loadPhotos();
-    },
-    clearGallery() {
-      this.title = null;
-      if (this.album) {
-        this.clearAlbum();
-      } else if (this.tag) {
-        this.clearTag();
-      }
-    },
-    clearTag() {
-      this.tag = null;
-      this.resetPage();
-      return this.loadPhotos();
-    },
+    // clearGallery() {
+    //   console.log('clear gallery');
+    //   this.$root.showRecent();
+    // },
     fetchPhotos() {
-      this.message = 'Loading...';
       this.loading = true;
       const params = {
         limit: this.limit,
@@ -99,48 +148,45 @@ const photosMixin = {
         filters['album_id'] = this.album.id;
       }
 
-      if (this.search) {
-        filters['search'] = this.search;
+      if (this.query) {
+        filters['search'] = this.query;
       }
 
       if (this.tag) {
         filters['tag'] = this.tag.slug;
       }
 
-      let cacheHomePage = false;
-      // cache unfiltered photo results
-      if (!Object.keys(filters).length && this.offset == 0) {
-        if (this.cachedPhotos.length) {
-          this.message = null;
-          this.loading = false;
-          this.photos = this.cachedPhotos;
-          this.totalPhotoCount = this.cachedPhotoAmount;
-          return new Promise((resolve, reject) => { resolve(); });
-        }
-        cacheHomePage = true;
-      }
+      // let cacheHomePage = false;
+      // // cache unfiltered photo results
+      // if (!Object.keys(filters).length && this.offset == 0) {
+      //   if (this.cachedPhotos.length) {
+      //     this.loading = false;
+      //     // this.photos = this.cachedPhotos;
+      //     this.$store.dispatch('setPhotos', this.cachedPhotos);
+      //     this.totalPhotoCount = this.cachedPhotoAmount;
+      //     return new Promise((resolve, reject) => { resolve(); });
+      //   }
+      //   cacheHomePage = true;
+      // }
 
       return Photo.fetchIndex(Object.assign(params,filters))
         .then(data => {
           const photos = data.data;
           this.totalPhotoCount = data.meta.count;
           this.addPhotosToGallery(photos);
-          this.message = null;
           this.loading = false;
 
-          if (cacheHomePage) {
-            this.cachedPhotoAmount = this.totalPhotoCount;
-            this.cachedPhotos = this.photos.slice(0, 40);
-          }
+          // if (cacheHomePage) {
+          //   this.cachedPhotoAmount = this.totalPhotoCount;
+          //   this.cachedPhotos = this.photos.slice(0, 40);
+          // }
         })
         .catch(err => {
-          this.message = 'Error loading photos';
           this.loading = false;
           console.error('Error fetching photos.', err);
         });
     },
     loadPhotos() {
-      this.updateGalleryURL();
       return this.fetchPhotos().then(() => {
         this.renderGallery();
         this.setupSlideShow();
@@ -159,33 +205,16 @@ const photosMixin = {
       }
     },
     resetPage() {
+      // this.album = null;
+      // this.query = null;
+      // this.tag = null;
+
       this.pageText = null;
-      this.photos = [];
+      //this.photos = [];
+      this.$store.dispatch('setPhotos', []);
       this.offset = 0;
       this.totalPhotoCount = 0;
       window.scrollTo(0, 0);
-    },
-    searchPhotos(query) {
-      this.search = query;
-      this.resetPage();
-      this.loadPhotos();
-    },
-    selectAlbum(album) {
-      this.album = album;
-      this.search = null;
-      this.title = album.title;
-      this.resetPage();
-      if (this.album.description) {
-        this.pageText = this.album.description;
-      }
-      return this.loadPhotos();
-    },
-    selectTag(tag) {
-      this.search = null;
-      this.tag = tag;
-      this.title = `#${tag.name.replace(/\s/g, '')}`;
-      this.resetPage();
-      return this.loadPhotos();
     },
     setupSlideShow() {
       const thumbnails = document.querySelectorAll('.item');
@@ -195,27 +224,6 @@ const photosMixin = {
     },
     toggleModal(visible) {
       this.showModal = visible;
-    },
-    updateGalleryURL() {
-      let url = window.location.origin;
-      let title = 'Broox Photos';
-
-      if (this.album) {
-        url += '/'+this.album.slug;
-        title = this.album.title;
-      } else if (this.search) {
-        const search = encodeURIComponent(this.search)
-        url += '/search/'+search;
-        title = search;
-      } else if (this.tag) {
-        url += '/tagged/'+this.tag.slug;
-        title = this.tag.name;
-      }
-
-      document.title = title;
-      if (document.location !== url) {
-        window.history.replaceState({ id: title }, title, url);
-      }
     },
     openSlideShow(event) {
       // event = event || window.event;
@@ -253,4 +261,4 @@ const photosMixin = {
       }
     }
   }
-};
+})

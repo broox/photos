@@ -1,13 +1,35 @@
 const ALBUM = 'album';
 const TAG = 'tag';
 
-Vue.component('Search', {
+const HeaderSearch = Vue.component('HeaderSearch', {
+  template: `
+    <form class="wrap" v-on:submit.prevent="searchPhotos">
+      <div class="search">
+        <input type="text" class="searchInput" placeholder="Search Broox Photos" autocorrect="off" autocapitalize="off" v-model="input" v-on:input="realtimeSearch" v-on:paste="realtimeSearch" v-on:blur="syncSearchForm">
+        <button type="submit" class="searchButton" v-show="!query">
+          <i class="fas fa-search"></i>
+        </button>
+        <button type="button" class="clearSearch" v-show="query" v-on:click="clearSearchForm">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="realtimeSearchResults" v-show="showRealtimeSearchResults" v-cloak>
+        <ul>
+          <li v-for="result in realtimeResults" v-on:click="selectRealtimeSearch(result)" :class="result.type">
+            <i class="fas fa-tag" v-if="result.type == 'tag'"></i>
+            <i class="fas fa-images"v-if="result.type == 'album'"></i>
+            {{ result.display }}
+          </li>
+        </ul>
+      </div>
+    </form>
+  `,
   props: [
-    'initQuery',
     'modal'
   ],
   data: () => {
     return {
+      // global: GlobalStore,
       albums: [],
       dropRealtimeResults: false, // prevent race conditions on full page / photo searches
       input: null,                // value displayed in the input form
@@ -17,9 +39,11 @@ Vue.component('Search', {
     }
   },
   computed: {
+    globalQuery() {
+      return this.$store.state.query;
+    },
     showRealtimeSearchResults() {
       const visible = this.albums.length > 0;
-      this.$emit('modal', visible);
       return visible;
     },
     realtimeResults() {
@@ -46,15 +70,14 @@ Vue.component('Search', {
 
       if (this.tagCount > displayedTags.length) {
         const remainingTags = this.tagCount - displayedTags.length;
-        remainingResults.push(remainingTags + ' ' + pluralize(remainingTags, ('more tag')));
+        remainingResults.push(pluralize(remainingTags, 'more tag'));
       }
 
       if (this.albumCount > displayedAlbums.length) {
         const remainingAlbums = this.albumCount - displayedAlbums.length;
-        remainingResults.push(remainingAlbums + ' ' + pluralize(remainingAlbums, ('more album')));
+        remainingResults.push(pluralize(remainingAlbums, 'more album'));
       }
 
-      console.log(remainingResults);
       if (remainingResults) {
         results.push({
           type: 'summary',
@@ -72,7 +95,8 @@ Vue.component('Search', {
     }    
   },
   watch: {
-    initQuery(query) {
+    'globalQuery': function(query) {
+      // FIXME: bug here...
       if (query !== this.query) {
         this.query = query;
         this.syncSearchForm();
@@ -94,13 +118,14 @@ Vue.component('Search', {
       this.tags = [];
     },
     clearSearch() {
-      this.query = null;
+      this.query = null; // should this.query be using this.global.query instead?
+      // this.global.query = null;
     },
     clearSearchForm() {
       this.input = null;
       this.clearRealtimeSearchResults();
       this.clearSearch();
-      this.$emit('query', this.query);
+      this.$root.showRecent();
     },
     realtimeSearch(event) {
       if (this.lastQuery == this.input) {
@@ -139,8 +164,8 @@ Vue.component('Search', {
     searchPhotos() {
       this.clearRealtimeSearchResults();
       this.query = this.input;
-      this.dropRealtimeResults = true;  
-      this.$emit('query', this.query);
+      this.dropRealtimeResults = true;
+      this.$root.search(this.query);
     },
     searchTags(query) {
       const params = {
@@ -156,7 +181,6 @@ Vue.component('Search', {
           }
           this.tags = data.data;
           this.tagCount = data.meta.count;
-          // TODO: emit tags?
         })
         .catch(err => {
           console.error('Error fetching tags', err);
@@ -164,11 +188,9 @@ Vue.component('Search', {
     },
     selectRealtimeSearch(result) {
       if (result.type === ALBUM) {
-        return this.$emit(ALBUM, result.album);
-      }
-
-      if (result.type === TAG) {
-        return this.$emit(TAG, result.tag);
+        this.$root.selectAlbum(result.album);
+      } else if (result.type === TAG) {
+        this.$root.selectTag(result.tag);
       }
     },
     syncSearchForm() {

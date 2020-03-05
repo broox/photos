@@ -33,13 +33,11 @@ function isLargeViewport() {
 }
 
 
-
 function pluralize(number, word) {
-  if (number == 1){
-    return word;
-  } else {
-    return word+'s';
+  if (number !== 1){
+    word = word+'s';
   }
+  return number.toLocaleString() + ' ' + word;
 };
 
 
@@ -54,35 +52,29 @@ function relativeTime(datetime) {
 
   if (elapsed < msPerMinute) {
     const seconds = Math.round(elapsed / 1000);
-    return seconds + pluralize(seconds, ' second') + ' ago';
+    return pluralize(seconds, 'second') + ' ago';
   }
 
   if (elapsed < msPerHour) {
-    const minutes = Math.round(elapsed / msPerMinute),
-          text = pluralize(minutes, 'minute');
-    return `${minutes} ${text} ago`;
+    const minutes = Math.round(elapsed / msPerMinute);
+    return pluralize(minutes, 'minute') + ' ago';
   }
 
   if (elapsed < msPerDay) {
-    const hours = Math.round(elapsed / msPerHour),
-          text = pluralize(hours, 'hour');
-    return `${hours} ${text} ago`;
+    const hours = Math.round(elapsed / msPerHour);
+    return pluralize(hours, 'hour') + ' ago';
   }
 
   if (elapsed < msPerMonth) {
-    const days = Math.round(elapsed / msPerDay),
-          text = pluralize(days, 'day');
-    return `${days} ${text} ago`;
+    const days = Math.round(elapsed / msPerDay);
+    return pluralize(days, 'day') + ' ago';
   }
 
   if (elapsed < msPerYear) {
-    const months = Math.round(elapsed/msPerMonth),
-          text = pluralize(months, 'month');
-    return `${months} ${text} ago`;
+    const months = Math.round(elapsed/msPerMonth);
+    return pluralize(months, 'month') + ' ago';
   }
 
-  const years = Math.round(elapsed / msPerYear),
-        text = pluralize(years, 'year');
-
-  return `${years} ${text} ago`;
+  const years = Math.round(elapsed / msPerYear);
+  return pluralize(years, 'year') + ' ago';
 }

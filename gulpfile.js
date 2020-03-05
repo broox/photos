@@ -22,6 +22,8 @@ gulp.task('concatenate-css-libraries', () => {
 gulp.task('concatenate-js-libraries', () => {
   const minified = gulp.src([
     './app/static/js/lib/vue.min.js',
+    './app/static/js/lib/vuex.min.js',
+    './app/static/js/lib/vue-router.min.js',
     './app/static/js/lib/flex-images.min.js',
     './app/static/js/lib/photoswipe.min.js',
   ]);
@@ -42,8 +44,9 @@ gulp.task('js', () => {
     './app/static/js/src/album.js',
     './app/static/js/src/photo.js',
     './app/static/js/src/tag.js',
+    './app/static/js/src/data.js',
     './app/static/js/src/photos-mixin.js',
-    './app/static/js/src/search.js',
+    './app/static/js/src/components/*.js',
     './app/static/js/src/app.js',
   ])
   .pipe(concat('app.combined.js'))
@@ -59,7 +62,8 @@ gulp.task('watch-client-files', () => {
     './app/static/css/lib/*',
     './app/static/css/src/*',
     './app/static/js/lib/*',
-    './app/static/js/src/*'
+    './app/static/js/src/*',
+    './app/static/js/src/*/*'
   ], () => {
     gulp.run(['jslib', 'js']);
   });

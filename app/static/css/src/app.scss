@@ -56,7 +56,7 @@ body {
 .wrap {
   box-shadow: 0 3px 1px -2px rgba(0,0,0,.2), 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12);
   border-radius: 5px;
-  margin: 10px 16px;
+  margin: 10px;
   padding: 0;
   position: absolute;
   top: 0;
@@ -77,6 +77,8 @@ body {
   position: relative;
   display: flex;
 }
+
+
 
 .searchInput {
   background: #fff;
@@ -106,7 +108,7 @@ body {
   }
 }
 
-.searchResults {
+.realtimeSearchResults {
   border-top: 1px solid #ddd;
   display: flex;
 
@@ -160,14 +162,14 @@ body {
 .contentCover {
   height: 100%;
   left: 0px;
-  position: absolute;
+  position: fixed;
   top: 0px;
   width: 100%;
   z-index: 1;
 }
 
 .content {
-  margin-top: $headerHeight;
+  margin: $headerHeight 18px 18px 18px;
   z-index: 0;
 
   .item {
@@ -175,13 +177,69 @@ body {
   }
 }
 
+.albumList {
+  margin: 5px;
+}
+
+ul.albums {
+  display: flex;
+  flex-flow: row nowrap;
+  list-style-type: none;
+  margin: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0;
+  width: 100%;
+
+  li {
+    cursor: pointer;
+    display: inline-block;
+    list-style: none;
+    padding: 10px;
+    white-space: normal;
+    width: 200px;
+
+    // Text
+    color: $primaryTextColor;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    &:first-child {
+      padding-left: 0;
+    }
+  }
+
+  img {
+    border-radius: 10px;
+    height: 150px;
+    width: 150px;
+  }
+
+  p { 
+    margin: 0;
+  }
+
+  i {
+    color: $secondaryTextColor;
+    font-size: 12px;
+    font-style: normal;
+  }
+}
+
 .pageText {
-  padding: 10px;
+  padding: 5px;
+}
+
+.albumCount {
+  color: $secondaryTextColor;
+  margin: 5px 0;
+  text-align: left;
 }
 
 .photoCount {
-  text-align: center;
   color: $secondaryTextColor;
+  margin: 5px;
+  text-align: left;
 }
 
 .loading {

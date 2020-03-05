@@ -11,102 +11,74 @@
   </head>
 
   <body>
+
     <div id="app">
-      {% raw %}
+      
         <div class="header" id="pageHeader">
-          <div class="galleryTitle" v-if="title">
-            <i class="fas fa-chevron-left back" v-on:click="clearGallery"></i>
-            <h1>{{ title }}</h1>
-          </div>
-
-          <search inline-template :init-query="search" :modal="showModal" v-on:modal="toggleModal" v-on:album="selectAlbum" v-on:query="searchPhotos" v-on:tag="selectTag" v-show="!title">
-            <form class="wrap" v-on:submit.prevent="searchPhotos">
-              <div class="search">
-                <input type="text" class="searchInput" placeholder="Search Broox Photos" autocorrect="off" autocapitalize="off" v-model="input" v-on:input="realtimeSearch" v-on:paste="realtimeSearch" v-on:blur="syncSearchForm">
-                <button type="submit" class="searchButton" v-show="!query">
-                  <i class="fas fa-search"></i>
-                </button>
-                <button type="button" class="clearSearch" v-show="query" v-on:click="clearSearchForm">
-                  <i class="fas fa-times"></i>
-                </button>
-              </div>
-              <div class="searchResults" v-show="showRealtimeSearchResults" v-cloak>
-                <ul>
-                  <li v-for="result in realtimeResults" v-on:click="selectRealtimeSearch(result)" :class="result.type">
-                    <i class="fas fa-tag" v-if="result.type == 'tag'"></i>
-                    <i class="fas fa-images"v-if="result.type == 'album'"></i>
-                    {{ result.display }}
-                  </li>
-                </ul>
-              </div>
-            </form>
-          </search>
+          <!--
+            KEEP ALIVE maintains state of the component, not the global datastore 
+            This will not work if maintaining global state.
+            I either need to copy each global property into the view
+            or come up with another solution (likely, vuex)
+          -->
+          <router-view name="header"></router-view>
         </div>
-
-        <!-- {{ message }} -->
-        <div class="contentCover" v-show="showModal" v-on:click="toggleModal(false)"></div>
-        <div class="flex-images content" v-cloak>
-          <div class="pageText" v-show="pageText" v-html="pageText"></div>
-          <p class="photoCount" v-show="totalPhotoCount">{{photoCountDisplay}}</p>
-          <!-- <div class="albums"></div> -->
-          <div v-for="(photo, index) in photos" class="item" :id="photo.id" :data-w="photo.w" :data-h="photo.h" :data-index="index">
-            <img :src="photo.thumbnail" :alt="photo.title"/>
-            <!-- {{ photo.title }} -->
-          </div>
+        <div class="content">
+          <router-view name="content"></router-view>
         </div>
-        <div class="loading" v-show="loading"><i class="fa fa-spin fa-spinner"></i></div>
+      
+    </div>
 
-        <div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
-          <div class="pswp__bg"></div>
-          <div class="pswp__scroll-wrap">
-            <div class="pswp__container">
-              <div class="pswp__item"></div>
-              <div class="pswp__item"></div>
-              <div class="pswp__item"></div>
-            </div>
-            <div class="pswp__ui pswp__ui--hidden">
-              <div class="pswp__top-bar">
-                <div class="pswp__counter"></div>
-                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
-                <button class="pswp__button pswp__button--share" title="Share"></button>
-                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
-                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
-                <button title="Album" class="pswp__button pswp__button--album"></button>
-                <div class="pswp__preloader">
-                  <div class="pswp__preloader__icn">
-                    <div class="pswp__preloader__cut">
-                      <div class="pswp__preloader__donut"></div>
-                    </div>
-                  </div>
+    <div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="pswp__bg"></div>
+      <div class="pswp__scroll-wrap">
+        <div class="pswp__container">
+          <div class="pswp__item"></div>
+          <div class="pswp__item"></div>
+          <div class="pswp__item"></div>
+        </div>
+        <div class="pswp__ui pswp__ui--hidden">
+          <div class="pswp__top-bar">
+            <div class="pswp__counter"></div>
+            <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+            <button class="pswp__button pswp__button--share" title="Share"></button>
+            <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+            <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+            <button title="Album" class="pswp__button pswp__button--album"></button>
+            <div class="pswp__preloader">
+              <div class="pswp__preloader__icn">
+                <div class="pswp__preloader__cut">
+                  <div class="pswp__preloader__donut"></div>
                 </div>
               </div>
-
-              <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
-                <div class="pswp__share-tooltip"></div>
-              </div>
-
-              <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)"></button>
-
-              <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button>
-
-              <div class="pswp__caption">
-                <div class="pswp__caption__center"></div>
-              </div>
             </div>
           </div>
+    
+          <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+            <div class="pswp__share-tooltip"></div>
+          </div>
+    
+          <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)"></button>
+    
+          <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button>
+    
+          <div class="pswp__caption">
+            <div class="pswp__caption__center"></div>
+          </div>
         </div>
-      {% endraw %}
+      </div>
     </div>
+
     <script src="/static/js/app.combined.js?20-2-25"></script>
     <script type="text/javascript">
       {%- if album %}
         app.selectAlbum({{ album|tojson }});
       {%- elif search_term %}
-        app.searchPhotos('{{search_term}}');
+        app.search('{{search_term}}');
       {%- elif tag %}
         app.selectTag({{ tag|tojson }});
       {%- else %}
-        app.loadPhotos();
+        app.showRecent();
       {%- endif %}
     </script>
   </body>

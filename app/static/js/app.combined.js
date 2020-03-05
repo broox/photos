@@ -33,13 +33,11 @@ function isLargeViewport() {
 }
 
 
-
 function pluralize(number, word) {
-  if (number == 1){
-    return word;
-  } else {
-    return word+'s';
+  if (number !== 1){
+    word = word+'s';
   }
+  return number.toLocaleString() + ' ' + word;
 };
 
 
@@ -54,38 +52,33 @@ function relativeTime(datetime) {
 
   if (elapsed < msPerMinute) {
     const seconds = Math.round(elapsed / 1000);
-    return seconds + pluralize(seconds, ' second') + ' ago';
+    return pluralize(seconds, 'second') + ' ago';
   }
 
   if (elapsed < msPerHour) {
-    const minutes = Math.round(elapsed / msPerMinute),
-          text = pluralize(minutes, 'minute');
-    return `${minutes} ${text} ago`;
+    const minutes = Math.round(elapsed / msPerMinute);
+    return pluralize(minutes, 'minute') + ' ago';
   }
 
   if (elapsed < msPerDay) {
-    const hours = Math.round(elapsed / msPerHour),
-          text = pluralize(hours, 'hour');
-    return `${hours} ${text} ago`;
+    const hours = Math.round(elapsed / msPerHour);
+    return pluralize(hours, 'hour') + ' ago';
   }
 
   if (elapsed < msPerMonth) {
-    const days = Math.round(elapsed / msPerDay),
-          text = pluralize(days, 'day');
-    return `${days} ${text} ago`;
+    const days = Math.round(elapsed / msPerDay);
+    return pluralize(days, 'day') + ' ago';
   }
 
   if (elapsed < msPerYear) {
-    const months = Math.round(elapsed/msPerMonth),
-          text = pluralize(months, 'month');
-    return `${months} ${text} ago`;
+    const months = Math.round(elapsed/msPerMonth);
+    return pluralize(months, 'month') + ' ago';
   }
 
-  const years = Math.round(elapsed / msPerYear),
-        text = pluralize(years, 'year');
-
-  return `${years} ${text} ago`;
+  const years = Math.round(elapsed / msPerYear);
+  return pluralize(years, 'year') + ' ago';
 }
+
 const Album = {
   fetchIndex(options) {
     const defaults = {
@@ -128,6 +121,78 @@ const Tag = {
   }
 };
 
+const GlobalStore = {
+  album: null,
+  page: null,
+  query: null,
+  tag: null,
+  title: null,
+};
+
+function serializeAlbum(album) {
+    album.url = `/${album.slug}`;
+    album.thumbnail = `https://derek.broox.com/square/${album.slug}/${album.thumbnail_id}/${album.slug}.jpg`;
+    album.time = album.created_at ? relativeTime(Date.parse(album.created_at)) : null;
+  
+    return album;
+  }
+  
+  // TODO: fix search results clearing when exiting out of an album
+  //       - use vue router?
+  //       infinite scroll to the right
+  Vue.component('AlbumList', {
+    props: [
+      'search'
+    ],
+    data: () => {
+      return {
+        albumCount: 0,
+        albums: [],
+      }
+    },
+    computed: {
+      albumCountDisplay() {
+        const albumCount = this.albumCount;
+        if (albumCount) {
+          return pluralize(albumCount, 'album');
+        }
+      }
+    },
+    watch: {
+      search(query) {
+        this.$refs.albums.scrollLeft = 0;
+  
+        if (!query) {
+          this.albumCount = 0;
+          this.albums = [];
+        }
+  
+        const lastAlbumQuery = query;
+        const params = {
+          limit: 40,
+          search: query
+        };
+        return Album.fetchIndex(params)
+          .then(data => {
+            if (lastAlbumQuery !== query) {
+              return;
+            }
+            this.albumCount = data.meta.count;
+            this.albums = data.data.map(serializeAlbum);
+            console.log(this.albumCount);
+            console.log(this.albums);
+          })
+          .catch(err => {
+            console.error('Error fetching albums', err);
+          });
+      }
+    },
+    methods: {
+      selectAlbum(album) {
+        this.$emit('album', album);
+      }
+    }
+  });
 function serializeForPhotoSwipe(photo) {
   const thumbnail = isLargeViewport() ? photo.images.medium : photo.images.small;
   let src = photo.images.medium;
@@ -163,22 +228,38 @@ function serializeForPhotoSwipe(photo) {
   // todo: album, camera, tags, etc
 }
 
-const photosMixin = {
-  data: {
-    album: null,
-    cachedPhotos: [],
-    cachedPhotoAmount: 0,
-    limit: 40,           // page size
-    loading: false,
-    photos: [],
-    offset: 0,           // paging
-    pageText: null,      // for album descriptions
-    photoRowHeight: 200,
-    search: null,        // the currently active search
-    showModal: false,
-    tag: null,
-    title: null,
-    totalPhotoCount: 0
+const Gallery = Vue.component('Gallery', {
+//const Gallery = {
+  template: `
+    <div>
+      <div class="pageText" v-show="pageText" v-html="pageText"></div>
+      <p class="photoCount" v-show="totalPhotoCount">{{photoCountDisplay}}</p>
+      <div class="flex-images">
+        <div v-for="(photo, index) in photos" class="item" :id="photo.id" :data-w="photo.w" :data-h="photo.h" :data-index="index">
+          <img :src="photo.thumbnail" :alt="photo.title"/>
+        </div>
+      </div>
+      <div class="loading" v-show="loading"><i class="fa fa-spin fa-spinner"></i></div>
+    </div>
+  `,
+  data: () => {
+    return {
+      // global: GlobalStore,
+      cachedPhotos: [],
+      cachedPhotoAmount: 0,
+      limit: 40,           // page size
+      loading: false,
+      // photos: [],
+      offset: 0,           // paging
+      pageText: null,      // for album descriptions
+      photoRowHeight: 200,
+      showModal: false,
+      totalPhotoCount: 0,
+
+      // album: null,
+      // query: null,
+      // tag: null,
+    }
   },
   created() {
     if (isLargeViewport()) {
@@ -189,35 +270,68 @@ const photosMixin = {
     photoCountDisplay() {
       const photoCount = this.totalPhotoCount;
       if (photoCount) {
-        return photoCount.toLocaleString() + ' ' + pluralize(photoCount, 'photo');
+        return pluralize(photoCount, 'photo');
       }
-    }
+    },
+    album() {
+      return this.$store.state.album;
+    },
+    page() {
+      return this.$store.state.page;
+    },
+    photos() {
+      return this.$store.state.photos;
+    },
+    query() {
+      return this.$store.state.query;
+    },
+    tag() {
+      return this.$store.state.tag;
+    },
+  },
+  watch: {
+    'album': function(album) {
+      if (album != null) {
+        this.resetPage();
+        // this.album = album;
+        if (album.description) {
+          this.pageText = album.description;
+        }
+        this.loadPhotos();
+      }
+    },
+    'page': function(page) {
+      if (page == pages.HOME) {
+        this.resetPage();
+        this.loadPhotos();
+      }
+    },
+    'tag': function(tag) {
+      if (tag != null) {
+        this.resetPage();
+        // this.tag = tag;
+        this.loadPhotos();
+      }
+    },
+    'query': function(query) {
+      if (query != null) {
+        this.resetPage();
+        // this.query = query;
+        this.loadPhotos();
+      }
+    },
   },
   methods: {
     addPhotosToGallery(photos) {
       const photoSwipePhotos = photos.map(serializeForPhotoSwipe);
-      this.photos.push(...photoSwipePhotos);
+      this.$store.dispatch('pushPhotos', photoSwipePhotos);
+      // this.photos.push(...photoSwipePhotos);
     },
-    clearAlbum() {
-      this.album = null;
-      this.resetPage();
-      return this.loadPhotos();
-    },
-    clearGallery() {
-      this.title = null;
-      if (this.album) {
-        this.clearAlbum();
-      } else if (this.tag) {
-        this.clearTag();
-      }
-    },
-    clearTag() {
-      this.tag = null;
-      this.resetPage();
-      return this.loadPhotos();
-    },
+    // clearGallery() {
+    //   console.log('clear gallery');
+    //   this.$root.showRecent();
+    // },
     fetchPhotos() {
-      this.message = 'Loading...';
       this.loading = true;
       const params = {
         limit: this.limit,
@@ -229,48 +343,45 @@ const photosMixin = {
         filters['album_id'] = this.album.id;
       }
 
-      if (this.search) {
-        filters['search'] = this.search;
+      if (this.query) {
+        filters['search'] = this.query;
       }
 
       if (this.tag) {
         filters['tag'] = this.tag.slug;
       }
 
-      let cacheHomePage = false;
-      // cache unfiltered photo results
-      if (!Object.keys(filters).length && this.offset == 0) {
-        if (this.cachedPhotos.length) {
-          this.message = null;
-          this.loading = false;
-          this.photos = this.cachedPhotos;
-          this.totalPhotoCount = this.cachedPhotoAmount;
-          return new Promise((resolve, reject) => { resolve(); });
-        }
-        cacheHomePage = true;
-      }
+      // let cacheHomePage = false;
+      // // cache unfiltered photo results
+      // if (!Object.keys(filters).length && this.offset == 0) {
+      //   if (this.cachedPhotos.length) {
+      //     this.loading = false;
+      //     // this.photos = this.cachedPhotos;
+      //     this.$store.dispatch('setPhotos', this.cachedPhotos);
+      //     this.totalPhotoCount = this.cachedPhotoAmount;
+      //     return new Promise((resolve, reject) => { resolve(); });
+      //   }
+      //   cacheHomePage = true;
+      // }
 
       return Photo.fetchIndex(Object.assign(params,filters))
         .then(data => {
           const photos = data.data;
           this.totalPhotoCount = data.meta.count;
           this.addPhotosToGallery(photos);
-          this.message = null;
           this.loading = false;
 
-          if (cacheHomePage) {
-            this.cachedPhotoAmount = this.totalPhotoCount;
-            this.cachedPhotos = this.photos.slice(0, 40);
-          }
+          // if (cacheHomePage) {
+          //   this.cachedPhotoAmount = this.totalPhotoCount;
+          //   this.cachedPhotos = this.photos.slice(0, 40);
+          // }
         })
         .catch(err => {
-          this.message = 'Error loading photos';
           this.loading = false;
           console.error('Error fetching photos.', err);
         });
     },
     loadPhotos() {
-      this.updateGalleryURL();
       return this.fetchPhotos().then(() => {
         this.renderGallery();
         this.setupSlideShow();
@@ -289,33 +400,16 @@ const photosMixin = {
       }
     },
     resetPage() {
+      // this.album = null;
+      // this.query = null;
+      // this.tag = null;
+
       this.pageText = null;
-      this.photos = [];
+      //this.photos = [];
+      this.$store.dispatch('setPhotos', []);
       this.offset = 0;
       this.totalPhotoCount = 0;
       window.scrollTo(0, 0);
-    },
-    searchPhotos(query) {
-      this.search = query;
-      this.resetPage();
-      this.loadPhotos();
-    },
-    selectAlbum(album) {
-      this.album = album;
-      this.search = null;
-      this.title = album.title;
-      this.resetPage();
-      if (this.album.description) {
-        this.pageText = this.album.description;
-      }
-      return this.loadPhotos();
-    },
-    selectTag(tag) {
-      this.search = null;
-      this.tag = tag;
-      this.title = `#${tag.name.replace(/\s/g, '')}`;
-      this.resetPage();
-      return this.loadPhotos();
     },
     setupSlideShow() {
       const thumbnails = document.querySelectorAll('.item');
@@ -325,27 +419,6 @@ const photosMixin = {
     },
     toggleModal(visible) {
       this.showModal = visible;
-    },
-    updateGalleryURL() {
-      let url = window.location.origin;
-      let title = 'Broox Photos';
-
-      if (this.album) {
-        url += '/'+this.album.slug;
-        title = this.album.title;
-      } else if (this.search) {
-        const search = encodeURIComponent(this.search)
-        url += '/search/'+search;
-        title = search;
-      } else if (this.tag) {
-        url += '/tagged/'+this.tag.slug;
-        title = this.tag.name;
-      }
-
-      document.title = title;
-      if (document.location !== url) {
-        window.history.replaceState({ id: title }, title, url);
-      }
     },
     openSlideShow(event) {
       // event = event || window.event;
@@ -383,18 +456,40 @@ const photosMixin = {
       }
     }
   }
-};
+})
 
 const ALBUM = 'album';
 const TAG = 'tag';
 
-Vue.component('Search', {
+const HeaderSearch = Vue.component('HeaderSearch', {
+  template: `
+    <form class="wrap" v-on:submit.prevent="searchPhotos">
+      <div class="search">
+        <input type="text" class="searchInput" placeholder="Search Broox Photos" autocorrect="off" autocapitalize="off" v-model="input" v-on:input="realtimeSearch" v-on:paste="realtimeSearch" v-on:blur="syncSearchForm">
+        <button type="submit" class="searchButton" v-show="!query">
+          <i class="fas fa-search"></i>
+        </button>
+        <button type="button" class="clearSearch" v-show="query" v-on:click="clearSearchForm">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="realtimeSearchResults" v-show="showRealtimeSearchResults" v-cloak>
+        <ul>
+          <li v-for="result in realtimeResults" v-on:click="selectRealtimeSearch(result)" :class="result.type">
+            <i class="fas fa-tag" v-if="result.type == 'tag'"></i>
+            <i class="fas fa-images"v-if="result.type == 'album'"></i>
+            {{ result.display }}
+          </li>
+        </ul>
+      </div>
+    </form>
+  `,
   props: [
-    'initQuery',
     'modal'
   ],
   data: () => {
     return {
+      // global: GlobalStore,
       albums: [],
       dropRealtimeResults: false, // prevent race conditions on full page / photo searches
       input: null,                // value displayed in the input form
@@ -404,9 +499,11 @@ Vue.component('Search', {
     }
   },
   computed: {
+    globalQuery() {
+      return this.$store.state.query;
+    },
     showRealtimeSearchResults() {
       const visible = this.albums.length > 0;
-      this.$emit('modal', visible);
       return visible;
     },
     realtimeResults() {
@@ -433,15 +530,14 @@ Vue.component('Search', {
 
       if (this.tagCount > displayedTags.length) {
         const remainingTags = this.tagCount - displayedTags.length;
-        remainingResults.push(remainingTags + ' ' + pluralize(remainingTags, ('more tag')));
+        remainingResults.push(pluralize(remainingTags, 'more tag'));
       }
 
       if (this.albumCount > displayedAlbums.length) {
         const remainingAlbums = this.albumCount - displayedAlbums.length;
-        remainingResults.push(remainingAlbums + ' ' + pluralize(remainingAlbums, ('more album')));
+        remainingResults.push(pluralize(remainingAlbums, 'more album'));
       }
 
-      console.log(remainingResults);
       if (remainingResults) {
         results.push({
           type: 'summary',
@@ -459,7 +555,8 @@ Vue.component('Search', {
     }    
   },
   watch: {
-    initQuery(query) {
+    'globalQuery': function(query) {
+      // FIXME: bug here...
       if (query !== this.query) {
         this.query = query;
         this.syncSearchForm();
@@ -481,13 +578,14 @@ Vue.component('Search', {
       this.tags = [];
     },
     clearSearch() {
-      this.query = null;
+      this.query = null; // should this.query be using this.global.query instead?
+      // this.global.query = null;
     },
     clearSearchForm() {
       this.input = null;
       this.clearRealtimeSearchResults();
       this.clearSearch();
-      this.$emit('query', this.query);
+      this.$root.showRecent();
     },
     realtimeSearch(event) {
       if (this.lastQuery == this.input) {
@@ -526,8 +624,8 @@ Vue.component('Search', {
     searchPhotos() {
       this.clearRealtimeSearchResults();
       this.query = this.input;
-      this.dropRealtimeResults = true;  
-      this.$emit('query', this.query);
+      this.dropRealtimeResults = true;
+      this.$root.search(this.query);
     },
     searchTags(query) {
       const params = {
@@ -543,7 +641,6 @@ Vue.component('Search', {
           }
           this.tags = data.data;
           this.tagCount = data.meta.count;
-          // TODO: emit tags?
         })
         .catch(err => {
           console.error('Error fetching tags', err);
@@ -551,11 +648,9 @@ Vue.component('Search', {
     },
     selectRealtimeSearch(result) {
       if (result.type === ALBUM) {
-        return this.$emit(ALBUM, result.album);
-      }
-
-      if (result.type === TAG) {
-        return this.$emit(TAG, result.tag);
+        this.$root.selectAlbum(result.album);
+      } else if (result.type === TAG) {
+        this.$root.selectTag(result.tag);
       }
     },
     syncSearchForm() {
@@ -566,13 +661,169 @@ Vue.component('Search', {
   }
 });
 
-const app = new Vue({
-  el: '#app',
-  data: {
-    message: null
+const HeaderTitle = Vue.component('HeaderTitle', {
+  template: `
+    <div class="galleryTitle">
+      <i class="fas fa-chevron-left back" v-on:click="goBack"></i>
+      <h1>{{ title }}</h1>
+    </div>
+  `,
+  // data: () => {
+  //   return {
+  //     global: GlobalStore,
+  //   }
+  // },
+  computed: {
+    title() {
+      return this.$store.state.title;
+    }
   },
-  mixins: [photosMixin]
+  methods: {
+    goBack() {
+      // TODO: check if there is history for this website in the router.
+      // if so, use that, else go to showRecent()
+      this.$root.showRecent();
+    }
+  }
 });
+
+const pages = {
+  HOME: 'home',
+  ALBUM: 'album',
+  SEARCH: 'search',
+  TAG: 'tag',
+};
+
+
+const routes = [
+  {
+    path: '/',
+    name: pages.HOME,
+    components: { header: HeaderSearch, content: Gallery },
+  },
+  {
+    path: '/search/:query',
+    name: pages.SEARCH,
+    components: { header: HeaderSearch, content: Gallery },
+  },
+  {
+    path: '/tagged/:tag',
+    name: pages.TAG,
+    components: { header: HeaderTitle, content: Gallery },
+  },
+  {
+    path: '/:album',
+    name: pages.ALBUM,
+    components: { header: HeaderTitle, content: Gallery },
+  },
+];
+
+Vue.use(Vuex)
+
+const store = new Vuex.Store({
+  state: {
+    album: null,
+    page: null,
+    photos: [],
+    query: null,
+    tag: null,
+    title: null,
+  },
+  mutations: {
+    clearFilters(state) {
+      state.album = null;
+      state.query = null;
+      state.tag = null;
+    },
+    pushPhotos(state, photos) {
+      state.photos.push(...photos);
+    },
+    setAlbum(state, album) {
+      state.album = album;
+    },
+    setPage(state, {title, page}) {
+      state.title = title;
+      state.page = page;
+    },
+    setPhotos(state, photos) {
+      state.photos = photos;
+    },
+    setQuery(state, query) {
+      state.query = query;
+    },
+    setTag(state, tag) {
+      state.tag = tag;
+    }
+  },
+  actions: {
+    pushPhotos({commit}, photos) {
+      commit('pushPhotos', photos);
+    },
+    search({commit}, query) {
+      commit('setQuery', query);
+    },
+    selectAlbum({commit}, album) {
+      commit('setAlbum', album);
+    },
+    selectFeed({commit}) {
+      commit('clearFilters');
+    },
+    selectPage({commit}, {title, page}) {
+      commit('setPage', {title, page});
+    },
+    setPhotos({commit}, photos) {
+      commit('setPhotos', photos);
+    },
+    selectTag({commit}, tag) {
+      commit('setTag', tag);
+    }
+  },
+});
+
+const router = new VueRouter({
+  mode: 'history',
+  routes
+});
+
+
+const app = new Vue({
+  router,
+  // data: GlobalStore,
+  store,
+  methods: {
+    go(title, route) {
+      document.title = title;
+      // this.page = route.name;
+      // this.title = title;
+      this.$store.dispatch('selectPage', {title, page: route.name});
+      this.$router.push(route).catch(err => {});
+    },
+    search(query) {
+      // this.query = query;
+      this.$store.dispatch('search', query);
+      this.go(query, {name: pages.SEARCH, params: {query: query}});
+    },
+    selectAlbum(album) {
+      // this.album = album;
+      this.$store.dispatch('selectAlbum', album);
+      this.go(album.title, {name: pages.ALBUM, params: {album: album.slug}});
+    },
+    selectTag(tag) {
+      // this.tag = tag;
+      this.$store.dispatch('selectTag', tag);
+      const title = `#${tag.name.replace(/\s/g, '')}`;
+      this.go(title, {name: pages.TAG, params: {tag: tag.slug}});
+    },
+    showRecent() {
+      // this.album = null;
+      // this.query = null;
+      // this.tag = null;
+      this.$store.dispatch('selectFeed');
+      this.go('Broox Photos', {name: pages.HOME});
+    }
+  }
+}).$mount('#app');
+
 
 const header = document.getElementById('pageHeader');
 const sticky = header.offsetTop;
