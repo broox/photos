@@ -15,9 +15,6 @@ services:
     ports:
       - "5000:5000"
     restart: always
-    volumes:
-      - ./server:/app
-      - ./client/dist:/app/dist
     networks:
       - default
 
@@ -25,3 +22,4 @@ networks:
   default:
     external:
       name: nginx-proxy
+
