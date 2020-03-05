@@ -1,6 +1,6 @@
 <template>
   <div class="album">
-    <Header show-title />
+    <Header :show-title="true" />
     <Content />
   </div>
 </template>

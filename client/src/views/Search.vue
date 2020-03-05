@@ -1,24 +1,19 @@
 <template>
   <div class="search">
-    <div class="header" id="pageHeader">  <!-- TODO: move this into header files? -->
-      <HeaderSearch />
-    </div>
-    <!-- <div class="contentCover" v-show="showModal" v-on:click="toggleModal(false)"></div> -->
-    <div class="content">
-      <Gallery />
-    </div>
+    <Header />
+    <Content />
   </div>
 </template>
 
 <script>
-import HeaderSearch from "@/components/HeaderSearch.vue";
-import Gallery from "@/components/Gallery.vue";
+import Header from "@/components/Header.vue";
+import Content from "@/components/Content.vue";
 
 export default {
   name: "Search",
   components: {
-    HeaderSearch,
-    Gallery
+    Header,
+    Content
   },
   created() {
     if (!this.$store.state.query) {

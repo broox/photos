@@ -1,6 +1,6 @@
 <template>
   <div class="tag">
-    <Header show-title />
+    <Header :show-title="true" />
     <Content />
   </div>
 </template>
