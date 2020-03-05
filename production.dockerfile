@@ -17,4 +17,3 @@ RUN npm run build
 
 FROM server AS copier
 COPY --from=builder /app/dist /app/dist
-

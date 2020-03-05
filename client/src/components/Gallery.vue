@@ -69,7 +69,7 @@ import Photo from "@/models/photo.js";
 import flexImages from "@/lib/flex-images.min.js";
 import { mapState } from "vuex";
 import PhotoSwipe from "@/lib/photoswipe.min.js";
-import PhotoSwipeUI_Default from "@/lib/photoswipe-ui.min.js";
+import PhotoSwipeUI_Default from "@/lib/photoswipe-ui.js";  // Not including the minified version because i have made UI changes
 
 export default {
   name: "Gallery",
