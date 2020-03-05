@@ -1,18 +1,29 @@
-# Photos
+# Broox Photos
 
-A simple photo gallery web application built to interact with the broox API.
+This is a simple photo gallery web application built to interact with my personal photos API.
 
-The front-end is built with [Vue](https://vuejs.org/), [FlexImages](https://github.com/Pixabay/JavaScript-flexImages), and [Photoswipe](https://github.com/dimsemenov/photoswipe).
+The front-end is a single-page application built with [Vue](https://vuejs.org/), [FlexImages](https://github.com/Pixabay/JavaScript-flexImages), and [Photoswipe](https://github.com/dimsemenov/photoswipe).
+
+The Vue application is using Vue CLI, Vue Router, Single file components, and Vuex for storing state. I went all-in on a Vue single page app, because I hadn't gotten to develop anything on the client-side for a few years and it seemed like a fun project to learn with.
 
 The backend-end is a lightweight python ([flask](https://github.com/pallets/flask)) application that proxies requests to the API.
 
-## Building assets:
+## Development
 
-1. Run `npm install`
-1. Run `gulp`
+This does not start the Vue CLI node server with hot reloading because I was having trouble running it alongside my flask backend with docker.
 
-## Running:
+```
+docker-compose -f docker-compose.dev.yml up
+```
 
-1. Run `docker-compose build`
-1. Run `docker-compose up` (or `docker-compose -f docker-compose-dev.yml up` when running locally)
-1. Hit `localhost:5000/
+This starts a Flask server and watches all of the client-side files for changes to build them accordingly.
+
+Hit `localhost:5000/` to test it out.
+
+### Production
+
+This uses a multi-stage dockerfile to build and minify the static files and then start the Flask server in production mode.
+
+```
+docker-compose up
+```

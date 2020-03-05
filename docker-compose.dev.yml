@@ -1,0 +1,29 @@
+version: '3'
+services:
+  client:
+    build:
+      context: ./
+      dockerfile: client.dockerfile
+    command: npm run dev
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./client:/app
+  server:
+    build:
+      context: ./
+      dockerfile: server.dockerfile
+    command: python3 /app/app.py
+    environment:
+      - FLASK_ENV=development
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./server:/app
+      - ${PWD}/client/dist:/app/dist
+
+# To make Vue built assets work, the `dist` directory
+# must exist when the volumes are mounted. By default,
+# Vue removes/recreates the `dist` directory on every
+# build. Disable this by adding the --no-clean flag to
+# the build script in package.json
