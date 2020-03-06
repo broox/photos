@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_from_directory
 from gevent.pywsgi import WSGIServer
 from requests import get
 import os
@@ -11,6 +11,12 @@ API_HOST = 'https://api.broox.com/'
 FLASK_ENV = os.environ.get('FLASK_ENV')
 PRODUCTION = 'production'
 VERIFY_SSL = FLASK_ENV == PRODUCTION
+
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'dist/assets/icons'),
+                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 
 @app.route('/api/<path:path>', methods=['GET'])
