@@ -39,7 +39,7 @@
 <script>
 import Album from "@/models/album.js";
 import Tag from "@/models/tag.js";
-import { pluralize } from "@/utils.js";
+import { isLargeViewport, pluralize } from "@/utils.js";
 
 const ALBUM = "album";
 const TAG = "tag";
@@ -54,6 +54,7 @@ export default {
       dropRealtimeResults: false, // prevent race conditions on full page / photo searches
       input: null,                // value displayed in the input form
       realtimeSearchDelay: null,
+      realtimeSearchLimit: 5,
       tags: []
     };
   },
@@ -68,7 +69,8 @@ export default {
       return (this.albums.length > 0 || this.tags.length > 0);
     },
     realtimeResults() {
-      const displayLimit = 10;
+      const displayLimit = this.realtimeSearchLimit;
+      const halfLimit = Math.floor(displayLimit / 2);
       const albums = this.albums.map(album => {
         return { type: ALBUM, display: album.title, album: album };
       });
@@ -77,7 +79,6 @@ export default {
       });
 
       const totalItems = this.albumCount + this.tagCount;
-      const halfLimit = 5;
       if (totalItems > displayLimit && this.tagCount > halfLimit) {
         let tagLimit;
         if (this.tagCount > halfLimit && this.albumCount > halfLimit) {
@@ -113,6 +114,9 @@ export default {
     }
   },
   created() {
+    if (isLargeViewport()) {
+      this.realtimeSearchLimit = 10;
+    }
     document.onkeydown = event => {
       if (event.key === "Escape") {
         this.resetSearchForm();

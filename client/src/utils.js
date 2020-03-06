@@ -26,7 +26,7 @@ export function getBrowserHeight() {
 }
 
 export function isLargeViewport() {
-  return getBrowserWidth() > 500;
+  return getBrowserWidth() >= 768;
 }
 
 export function pluralize(number, word) {
