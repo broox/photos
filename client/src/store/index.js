@@ -10,6 +10,7 @@ export default new Vuex.Store({
   state: {
     album: null,
     coverContent: false,
+    lastPage: null,
     limit: 40,
     loading: false,
     offset: 0,
@@ -52,6 +53,9 @@ export default new Vuex.Store({
     },
     setLoading(state, loading) {
       state.loading = loading;
+    },
+    setLastPage(state, path) {
+      state.lastPage = path;
     },
     setPage(state, title) {
       state.title = title;
@@ -149,6 +153,10 @@ export default new Vuex.Store({
 
       document.title = title;
       router.push(path).catch(() => {});
+    },
+    setLastPage({commit}, path) {
+      // This is used to make the chevron on HeaderTitle smart
+      commit('setLastPage', path);
     },
     setPhotos({commit}, photos) {
       commit('setPhotos', photos);

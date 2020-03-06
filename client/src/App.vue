@@ -7,7 +7,7 @@
 <script>
   // KILLME?
   export default {
-    name: "App",
+    name: "App"
   }
 </script>
 

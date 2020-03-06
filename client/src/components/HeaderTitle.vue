@@ -15,9 +15,11 @@
     },
     methods: {
       goBack() {
-        // TODO: check if there is history for this website in the router.
-        // if so, use that, else go to selectFeed()
-        this.$store.dispatch('selectFeed');
+        if (this.$store.state.lastPage) {
+          this.$router.go(-1)
+        } else {
+          this.$store.dispatch('selectFeed');
+        }
       }
     }
   };
