@@ -10,7 +10,7 @@
         v-model="input"
         v-on:input="realtimeSearch"
         v-on:paste="realtimeSearch"
-        v-on:blur="syncSearchForm"
+        v-on:blur="resetSearchForm"
       />
       <button type="submit" class="searchButton" v-show="!query">
         <i class="fas fa-search"></i>
@@ -24,7 +24,7 @@
         <li
           v-for="(result, index) in realtimeResults"
           v-bind:key="index"
-          v-on:click="selectRealtimeSearch(result)"
+          v-on:mousedown="selectRealtimeSearch(result)"
           :class="result.type"
         >
           <i class="fas fa-tag" v-if="result.type == 'tag'"></i>
@@ -115,22 +115,26 @@ export default {
   created() {
     document.onkeydown = event => {
       if (event.key === "Escape") {
-        this.clearRealtimeSearchResults();
-        this.syncSearchForm();
+        this.resetSearchForm();
       }
     };
   },
   mounted() {
-    this.syncSearchForm();
+    this.resetSearchForm();
   },
   watch: {
     coverContent(visible) {
-      if (!visible) {
-        this.clearRealtimeSearchResults();
+      // If content cover disappears, it was either tapped, or dismissed due to
+      // no realtime results being returned from the current input. Only clear
+      // the search results and revert the input value has gone away and the
+      // input does not currently have focus.
+      const searchField = document.querySelectorAll(".searchInput")[0];
+      if (!visible && searchField != document.activeElement) {
+        this.resetSearchForm();
       }
     },
     query() {
-      this.syncSearchForm();
+      this.resetSearchForm();
     },
     showRealtimeSearchResults(visible) {
       this.$store.dispatch('coverContent', visible);
@@ -153,13 +157,17 @@ export default {
       this.$store.dispatch('selectFeed');
     },
     realtimeSearch(event) {
-      if (this.input.length <= 1 || event.key == "Enter") {
+      if (this.input.length <= 1 || event.key === "Enter") {
         this.clearRealtimeSearchResults();
         return;
       }
 
       clearTimeout(this.realtimeSearchDelay);
 
+      // TODO: keep a cache of key/value pairs for the latest n realtime search results
+      // { 'ka': [<results>], 'kar': [<results>] }
+      // immediately return those if they exist. otherwise wait the half second to do the ajax query
+      // allows for easy backspacing
       this.realtimeSearchDelay = setTimeout(() => {
         this.searchTags(this.input);
         this.searchAlbums(this.input);
@@ -186,6 +194,13 @@ export default {
         });
     },
     searchPhotos() {
+      // This is triggered by a `mousedown` event from the realtime search
+      // results' "more" row because, when tapping out of the search input
+      // field a `blur` event is fired. When focus is lost by tapping outside
+      // of a field, the event order goes: mousedown => blur => click. So, we
+      //  submit the form at `mousedown` instead of `click` to prevent
+      // `resetSearchForm` from resetting the desired search term.
+
       this.clearRealtimeSearchResults();
       this.dropRealtimeResults = true;
       this.$store.dispatch("search", this.input);
@@ -218,10 +233,17 @@ export default {
         this.searchPhotos();
       }
     },
-    syncSearchForm() {
-      if (this.query && this.input !== this.query) {
+    resetSearchForm() {
+      if (!this.query) {
+        // Input blurred while there are characters in the search field on the
+        // HOME page
+        this.input = "";
+      } else if (this.query && this.input !== this.query) {
+        // Input blurred while there are different characters in the search
+        // field than the current search results that are being displayed
         this.input = this.query;
       }
+      this.clearRealtimeSearchResults();
     }
   }
 };
