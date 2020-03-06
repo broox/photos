@@ -1,5 +1,5 @@
 <template>
-  <div class="tag">
+  <div>
     <Header :show-title="true" />
     <Content />
   </div>

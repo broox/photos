@@ -2,19 +2,23 @@
   <div>  <!-- Vue requires a single top level element in all templates -->
     <div class="contentCover" v-show="showModal" v-on:click="hideModal()"></div>
     <div class="content">
+      <AlbumList />
       <Gallery />
     </div>
   </div>
 </template>
 
 <script>
+import AlbumList from "@/components/AlbumList.vue";
 import Gallery from "@/components/Gallery.vue";
 import HeaderTitle from "@/components/HeaderTitle.vue";
 
 export default {
   name: "Content",
   components: {
-    Gallery
+    AlbumList,
+    Gallery,
+    HeaderTitle
   },
   computed: {
     showModal() {

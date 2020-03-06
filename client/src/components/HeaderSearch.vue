@@ -43,6 +43,7 @@ import { pluralize } from "@/utils.js";
 
 const ALBUM = "album";
 const TAG = "tag";
+const SUMMARY = "summary";
 
 export default {
   name: "HeaderSearch",
@@ -52,7 +53,7 @@ export default {
       albums: [],
       dropRealtimeResults: false, // prevent race conditions on full page / photo searches
       input: null,                // value displayed in the input form
-      lastQuery: null,
+      realtimeSearchDelay: null,
       tags: []
     };
   },
@@ -64,8 +65,7 @@ export default {
       return this.$store.state.query;
     },
     showRealtimeSearchResults() {
-      const visible = (this.albums.length > 0 || this.tags.length > 0);
-      return visible;
+      return (this.albums.length > 0 || this.tags.length > 0);
     },
     realtimeResults() {
       const displayLimit = 10;
@@ -105,7 +105,7 @@ export default {
 
       if (remainingResults) {
         results.push({
-          type: "summary",
+          type: SUMMARY,
           display: remainingResults.join(" and ")
         });
       }
@@ -144,23 +144,26 @@ export default {
     clearRealtimeSearchResults() {
       this.albums = [];
       this.tags = [];
+
+      // This should be automatically happening when the album and tags are emptied...
+      // I saw some weirdness with it not working tho.
+      this.$store.dispatch('coverContent', false);
     },
     clearSearchForm() {
       this.$store.dispatch('selectFeed');
     },
     realtimeSearch(event) {
-      if (this.lastQuery == this.input) {
+      if (this.input.length <= 1 || event.key == "Enter") {
+        this.clearRealtimeSearchResults();
         return;
       }
 
-      if (this.input.length > 2 && event.key !== "Enter") {
+      clearTimeout(this.realtimeSearchDelay);
+
+      this.realtimeSearchDelay = setTimeout(() => {
         this.searchTags(this.input);
         this.searchAlbums(this.input);
-        this.lastQuery = this.input;
-      } else {
-        this.clearRealtimeSearchResults();
-        this.lastQuery = null;
-      }
+      }, 400);
     },
     searchAlbums(query) {
       const params = {
@@ -211,6 +214,8 @@ export default {
         this.$store.dispatch("selectAlbum", result.album);
       } else if (result.type === TAG) {
         this.$store.dispatch("selectTag", result.tag);
+      } else if (result.type === SUMMARY) {
+        this.searchPhotos();
       }
     },
     syncSearchForm() {

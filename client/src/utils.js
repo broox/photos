@@ -74,6 +74,13 @@ export function relativeTime(datetime) {
   return pluralize(years, "year") + " ago";
 }
 
+export function serializeAlbum(album) {
+  album.url = `/${album.slug}`;
+  album.thumbnail = `https://derek.broox.com/square/${album.slug}/${album.thumbnail_id}/${album.slug}.jpg`;
+  album.time = album.created_at ? relativeTime(Date.parse(album.created_at)) : null;
+  return album;
+}
+
 export function serializeForPhotoSwipe(photo) {
   const thumbnail = isLargeViewport() ? photo.images.medium : photo.images.small;
   let src = photo.images.medium;

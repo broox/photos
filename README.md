@@ -27,3 +27,5 @@ This uses a multi-stage dockerfile to build and minify the static files and then
 ```
 docker-compose up
 ```
+
+To re-build the app after checking out new code in production, do not stop the server (via `docker-compose stop` or `down`). Simply run `docker-compose up --build -d` to build the new application while the current app is running. Once it's done building, it will be running in detached mode.

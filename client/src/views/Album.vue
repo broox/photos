@@ -1,5 +1,5 @@
 <template>
-  <div class="album">
+  <div>
     <Header :show-title="true" />
     <Content />
   </div>

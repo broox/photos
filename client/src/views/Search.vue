@@ -1,5 +1,5 @@
 <template>
-  <div class="search">
+  <div>
     <Header />
     <Content />
   </div>

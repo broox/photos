@@ -13,6 +13,7 @@ export default new Vuex.Store({
     limit: 40,
     loading: false,
     offset: 0,
+    photoFilters: null,
     photos: [],
     query: null,
     tag: null,
@@ -30,6 +31,9 @@ export default new Vuex.Store({
     },
     incrementOffset(state) {
       state.offset += state.limit;
+    },
+    photoFilters(state, filters) {
+      state.photoFilters = filters;
     },
     pushPhotos(state, { photos, count }) {
       state.photos.push(...photos);
@@ -86,8 +90,15 @@ export default new Vuex.Store({
         filters["tag"] = state.tag.slug;
       }
 
+      // Caching photoFilters is a hack to prevent a race condition
+      commit('photoFilters', Object.assign({}, filters));
+
       return Photo.fetchIndex(Object.assign(params, filters))
         .then(data => {
+          if (JSON.stringify(filters) !== JSON.stringify(state.photoFilters)) {
+            // Hack to drop stale requests on the floor
+            return;
+          }
           const photos = data.data;
           const photoSwipePhotos = photos.map(serializeForPhotoSwipe);
           commit('pushPhotos', { photos: photoSwipePhotos, count: data.meta.count });
@@ -99,7 +110,6 @@ export default new Vuex.Store({
     },
     fetchMorePhotos({commit, dispatch, state}) {
       commit('incrementOffset');
-      console.log(state);
       if (state.offset >= state.totalPhotoCount) return;
       dispatch('fetchPhotos');
     },
@@ -116,6 +126,7 @@ export default new Vuex.Store({
       dispatch('fetchPhotos');
     },
     selectAlbum({commit, dispatch}, album) {
+      commit('clearFilters');
       commit('resetPhotos'); 
       dispatch('selectPage', {
         title: album.title,
@@ -143,6 +154,7 @@ export default new Vuex.Store({
       commit('setPhotos', photos);
     },
     selectTag({commit, dispatch}, tag) {
+      commit('clearFilters');
       commit('resetPhotos'); 
       const title = `#${tag.name.replace(/\s/g, "")}`;
       dispatch('selectPage', {
