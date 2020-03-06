@@ -44,13 +44,19 @@ export default {
   }
 
  .content {
-    margin: $headerHeight 18px 18px 18px;
+    margin: $headerHeight 5px 5px 5px;
     left: 0;
     right: 0;
     z-index: 0;
 
     .item {
       cursor: pointer;
+    }
+  }
+
+  @media only screen and (min-width: 768px) {
+    .content {
+      margin: $headerHeight 18px 18px 18px;
     }
   }
 </style>
