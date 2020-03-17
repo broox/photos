@@ -48,7 +48,9 @@ export default {
       console.log('query changed', query);
       this.albumCount = 0;
       this.albums = [];
-      this.fetchAlbums();
+      if (query) {
+        this.fetchAlbums();
+      }
     }
   },
   methods: {

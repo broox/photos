@@ -64,8 +64,7 @@
 </template>
 
 <script>
-import { isLargeViewport, pluralize, serializeForPhotoSwipe } from "@/utils.js";
-import Photo from "@/models/photo.js";
+import { isLargeViewport, pluralize } from "@/utils.js";
 import flexImages from "@/lib/flex-images.min.js";
 import { mapState } from "vuex";
 import PhotoSwipe from "@/lib/photoswipe.min.js";
@@ -110,11 +109,11 @@ export default {
     ...mapState({
       album: state => state.album,
       loading: state => state.loading,
-      offset: state => state.offset,
-      photos: state => state.photos,
+      offset: state => state.photos.offset,
+      photos: state => state.photos.photos,
       query: state => state.query,
       tag: state => state.tag,
-      totalPhotoCount: state => state.totalPhotoCount
+      totalPhotoCount: state => state.photos.totalPhotoCount
     })
   },
   watch: {
