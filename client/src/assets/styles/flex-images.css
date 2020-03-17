@@ -1,3 +1,18 @@
 .flex-images { overflow: hidden; }
 .flex-images .item { float: left; margin: 4px; border: 1px solid #eee; box-sizing: content-box; overflow: hidden; position: relative;  }
 .flex-images .item img { display: block; width: auto; height: 100%; }
+
+.flex-images .item img:after {
+    content: attr(alt);
+    color: #DEDEDE;
+    display: block;
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #fff;
+    text-align: center;
+    line-height: 1.5em;
+}
