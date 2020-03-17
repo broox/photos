@@ -1,6 +1,7 @@
 import Vue from "vue";
 import Vuex from "vuex";
 
+import albums from "@/store/albums";
 import photos from "@/store/photos";
 import router from "@/router";
 
@@ -8,6 +9,7 @@ Vue.use(Vuex);
 
 export default new Vuex.Store({
   modules: {
+    albums,
     photos
   },
   state: {
@@ -59,6 +61,7 @@ export default new Vuex.Store({
         path: { name: "Search", params: { query } } // FIXME: urlencode?
       });
       commit('setQuery', query);
+      dispatch('fetchAlbums');
       dispatch('fetchPhotos');
     },
     selectAlbum({commit, dispatch}, album) {

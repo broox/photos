@@ -12,26 +12,13 @@
 </template>
 
 <script>
-import {pluralize, serializeAlbum } from "@/utils.js";
-import Album from "@/models/album.js";
+import { pluralize } from "@/utils.js";
+import { mapState } from "vuex";
 
-// TODO: fix search results clearing when exiting out of an album
-//       - use vue router?
-//       infinite scroll to the right
+// TODO: infinite scroll to the right
 
 export default {
   name: "AlbumList",
-  data: () => {
-    return {
-      albumCount: 0,
-      albums: [],
-    }
-  },
-  mounted() {
-    if (this.query) {
-      this.fetchAlbums();
-    }
-  },
   computed: {
     albumCountDisplay() {
       const albumCount = this.albumCount;
@@ -39,42 +26,13 @@ export default {
         return pluralize(albumCount, "album");
       }
     },
-    query() {
-      return this.$store.state.query;
-    },
-  },
-  watch: {
-    query(query) {
-      console.log('query changed', query);
-      this.albumCount = 0;
-      this.albums = [];
-      if (query) {
-        this.fetchAlbums();
-      }
-    }
+    ...mapState({
+      albumCount: state => state.albums.count,
+      albums: state => state.albums.albums,
+      query: state => state.query,
+    })
   },
   methods: {
-    fetchAlbums() {
-      // this.$refs.albums.scrollLeft = 0;
-      console.log('refs', this.$refs);
-
-      const lastAlbumQuery = this.query;
-      const params = {
-        limit: 40,
-        search: this.query
-      };
-      return Album.fetchIndex(params)
-        .then(data => {
-          if (lastAlbumQuery !== this.query) {
-            return;
-          }
-          this.albumCount = data.meta.count;
-          this.albums = data.data.map(serializeAlbum);
-        })
-        .catch(err => {
-          console.error("Error fetching albums", err);
-        });
-    },
     selectAlbum(album) {
       this.$store.dispatch("selectAlbum", album);
     }
