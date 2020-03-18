@@ -78,18 +78,21 @@ export default {
     };
   },
   created() {
-    // this.resetPage();
     if (isLargeViewport()) {
       this.photoRowHeight = 300;
     }
   },
-  updated() {
+  beforeDestroy() {
+    window.removeEventListener("scroll", this.infiniteScroll);
+  },
+  mounted() {
     if (this.photos.length) {
+      // This is hit when photos are set from a cache
       this.renderGallery();
       this.setupSlideShow();
     }
   },
-  activated() {
+  updated() {
     if (this.photos.length) {
       this.renderGallery();
       this.setupSlideShow();
@@ -116,11 +119,6 @@ export default {
       totalPhotoCount: state => state.photos.totalPhotoCount
     })
   },
-  watch: {
-    photos: function(photos) {
-      console.log('gallery photos changed');
-    }
-  },
   methods: {
     loadMorePhotos() {
       this.$store.dispatch("fetchMorePhotos");
@@ -130,11 +128,6 @@ export default {
       if (this.offset < this.totalPhotoCount) {
         window.addEventListener("scroll", this.infiniteScroll);
       }
-    },
-    resetPage() {
-      // FIXME: Where should this be called?
-      this.$store.dispatch("setPhotos", []);
-      window.scrollTo(0, 0);
     },
     setupSlideShow() {
       const thumbnails = document.querySelectorAll(".item");
@@ -173,8 +166,8 @@ export default {
       const documentHeight = document.documentElement.offsetHeight;
       const offset = document.documentElement.scrollTop + window.innerHeight + this.photoRowHeight * 10;
       if (offset >= documentHeight) {
-        this.loadMorePhotos();
         window.removeEventListener("scroll", this.infiniteScroll);
+        this.loadMorePhotos();
       }
     }
   }

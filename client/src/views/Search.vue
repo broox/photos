@@ -16,9 +16,12 @@ export default {
     Content
   },
   created() {
-    if (!this.$store.state.query) {
-      const query = this.$router.currentRoute.params.query;
-      this.$store.dispatch("search", query);
+    const stateQuery = this.$store.state.query;
+    const urlQuery = this.$router.currentRoute.params.query;
+    if (!stateQuery || stateQuery != urlQuery) {
+      // View was loaded via direct-link, or by navigating back/forward
+      // through history
+      this.$store.dispatch("search", urlQuery);
     }
   }
 };
