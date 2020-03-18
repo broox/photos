@@ -2,6 +2,7 @@
   <div>  <!-- Vue requires a single top level element in all templates -->
     <div class="contentCover" v-show="showModal" v-on:click="hideModal()"></div>
     <div class="content">
+      <div class="pageText" v-show="pageText" v-html="pageText"></div>
       <AlbumList />
       <Gallery />
     </div>
@@ -12,6 +13,7 @@
 import AlbumList from "@/components/AlbumList.vue";
 import Gallery from "@/components/Gallery.vue";
 import HeaderTitle from "@/components/HeaderTitle.vue";
+import { mapState } from "vuex";
 
 export default {
   name: "Content",
@@ -21,9 +23,13 @@ export default {
     HeaderTitle
   },
   computed: {
-    showModal() {
-      return this.$store.state.coverContent;
+    pageText() {
+      return this.album ? this.album.description : null;
     },
+    ...mapState({
+      album: state => state.album,
+      showModal: state => state.coverContent
+    })
   },
   methods: {
     hideModal() {
@@ -52,6 +58,10 @@ export default {
     .item {
       cursor: pointer;
     }
+  }
+
+  .pageText {
+    padding: 5px 10px;
   }
 
   @media only screen and (min-width: 768px) {

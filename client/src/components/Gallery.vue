@@ -1,6 +1,5 @@
 <template>
   <div>
-    <div class="pageText" v-show="pageText" v-html="pageText"></div>
     <p class="photoCount" v-show="totalPhotoCount">{{ photoCountDisplay }}</p>
     <div class="flex-images">
       <div
@@ -99,9 +98,6 @@ export default {
     }
   },
   computed: {
-    pageText() {
-      return this.album ? this.album.description : null;
-    },
     photoCountDisplay() {
       const photoCount = this.totalPhotoCount;
       if (photoCount) {
@@ -178,10 +174,6 @@ export default {
   @import "~@/assets/styles/flex-images.css";
   @import "~@/assets/styles/photoswipe.css";
   @import "~@/assets/styles/photoswipe-skin.css";
-
-  .pageText {
-    padding: 5px;
-  }
 
   .photoCount {
     color: $secondaryTextColor;
