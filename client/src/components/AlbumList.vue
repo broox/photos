@@ -1,6 +1,6 @@
 <template>
   <div class="albumList">
-    <p class="photoCount" v-show="albumCount">{{ albumCountDisplay }}</p>
+    <p class="albumCount" v-show="albumCount">{{ albumCountDisplay }}</p>
     <ul class="albums">
       <li v-for="(album, index) in albums" v-bind:key="index" v-on:click="selectAlbum(album)">
         <img :src="album.thumbnail">

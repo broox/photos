@@ -61,7 +61,7 @@ export default {
   }
 
   .pageText {
-    padding: 5px 10px;
+    padding: 5px;
   }
 
   @media only screen and (min-width: 768px) {
