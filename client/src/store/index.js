@@ -56,21 +56,21 @@ export default new Vuex.Store({
     },
     search({commit, dispatch}, query) {
       commit('reset'); // FIXME: maybe this should be dispatched from Gallery.destroy?
+      commit('setQuery', query);
       dispatch('selectPage', {
         title: query,
         path: { name: "Search", params: { query } } // FIXME: urlencode?
       });
-      commit('setQuery', query);
       dispatch('fetchAlbums');
       dispatch('fetchPhotos');
     },
     selectAlbum({commit, dispatch}, album) {
       commit('reset');
+      commit('setAlbum', album);
       dispatch('selectPage', {
         title: album.title,
         path: { name: "Album", params: { album: album.slug } }
       });
-      commit('setAlbum', album);
       dispatch('fetchPhotos');
     },
     selectFeed({commit, dispatch}) {
@@ -83,7 +83,6 @@ export default new Vuex.Store({
     },
     selectPage({commit}, {title, path}) {
       commit('setPage', title);
-
       document.title = title;
       router.push(path).catch(() => {});
     },
@@ -92,13 +91,13 @@ export default new Vuex.Store({
       commit('setLastPage', path);
     },
     selectTag({commit, dispatch}, tag) {
-      commit('reset');
       const title = `#${tag.name.replace(/\s/g, "")}`;
+      commit('reset');
+      commit('setTag', tag);
       dispatch('selectPage', {
         title,
         path: { name: "Tag", params: { tag: tag.slug } }
       });
-      commit('setTag', tag);
       dispatch('fetchPhotos');
     }
   }

@@ -1,6 +1,12 @@
 <template>
   <div id="app">
-    <router-view></router-view>
+    <router-view :key="$route.fullPath"></router-view>
+    <!--
+      :key is needed in order to force a re-render when navigating back
+      and forth between routes that render the same View. e.g. searching
+      for `kari`, then searching for `jeff`, and then hitting the back
+      button to look at `kari` again
+    -->
   </div>
 </template>
 

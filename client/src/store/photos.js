@@ -3,6 +3,7 @@ import { serializeForPhotoSwipe } from "@/utils.js";
 
 export default {
     state: {
+      cache: {},
       limit: 40,
       offset: 0,
       photoFilters: null,
@@ -10,6 +11,13 @@ export default {
       totalPhotoCount: 0
     },
     mutations: {
+      cachePhotos(state, key) {
+        state.cache[key] = {
+          offset: state.offset,
+          photos: state.photos,
+          totalPhotoCount: state.totalPhotoCount
+        };
+      },
       incrementOffset(state) {
         state.offset += state.limit;
       },
@@ -20,14 +28,15 @@ export default {
         state.photos.push(...photos);
         state.totalPhotoCount = count;
       },
+      replacePhotos(state, { photos, count, offset }) {
+        state.offset = offset;
+        state.photos = photos;
+        state.totalPhotoCount = count;
+      },
       reset(state) {
-        console.log('reset photos');
         state.photos = [];
         state.offset = 0;
         state.totalPhotoCount = 0;
-      },
-      setPhotos(state, photos) {
-        state.photos = photos;
       },
     },
     actions: {
@@ -55,6 +64,18 @@ export default {
   
         // Caching photoFilters is a hack to prevent a race condition
         commit('photoFilters', Object.assign({}, filters));
+
+        const cacheKey = JSON.stringify(filters);
+        if (state.offset == 0 && state.cache[cacheKey]) {
+          const cachedPhotos = state.cache[cacheKey];
+          commit('replacePhotos', {
+            count: cachedPhotos.totalPhotoCount,
+            offset: cachedPhotos.offset,
+            photos: cachedPhotos.photos
+          });
+          commit('setLoading', false, { root: true });
+          return; // FIXME: this is not a promise...
+        }
   
         return Photo.fetchIndex(Object.assign(params, filters))
           .then(data => {
@@ -65,6 +86,7 @@ export default {
             const photos = data.data;
             const photoSwipePhotos = photos.map(serializeForPhotoSwipe);
             commit('pushPhotos', { photos: photoSwipePhotos, count: data.meta.count });
+            commit('cachePhotos', cacheKey); // FIXME: cache only the first page of photos?
             commit('setLoading', false, { root: true });
           })
           .catch(err => {
@@ -80,8 +102,5 @@ export default {
       pushPhotos({commit}, photos) {
         commit('pushPhotos', photos);
       },
-      setPhotos({commit}, photos) {
-        commit('setPhotos', photos);
-      }
     }
   };
