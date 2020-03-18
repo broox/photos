@@ -46,7 +46,7 @@ export default {
     position: fixed;
     top: 0px;
     width: 100%;
-    z-index: 1;
+    z-index: 9;
   }
 
  .content {

@@ -11,6 +11,7 @@
         v-on:input="realtimeSearch"
         v-on:paste="realtimeSearch"
         v-on:blur="resetSearchForm"
+        v-on:focus="realtimeSearch"
       />
       <button type="submit" class="searchButton" v-show="!query">
         <i class="fas fa-search"></i>
