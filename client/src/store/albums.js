@@ -33,11 +33,19 @@ export default {
       fetchAlbums({commit, state, rootState}) {
         const lastAlbumQuery = rootState.query; // FIXME
         const params = {
-          limit: 40,
-          search: rootState.query
+          limit: 40
         };
 
-        const cacheKey = JSON.stringify(rootState.query);
+        const filters = {};
+        if (rootState.album) {
+          filters["parent_id"] = rootState.album.id;
+        }
+
+        if (rootState.query) {
+          filters["search"] = rootState.query;
+        }
+
+        const cacheKey = JSON.stringify(filters);
         if (state.cache[cacheKey]) {
           const cachedAlbums = state.cache[cacheKey];
           commit('replaceAlbums', {
@@ -47,7 +55,7 @@ export default {
           return; // FIXME: this is not a promise...
         }
 
-        return Album.fetchIndex(params)
+        return Album.fetchIndex(Object.assign(params, filters))
           .then(data => {
             if (lastAlbumQuery !== rootState.query) {
               // Hack to drop stale requests on the floor

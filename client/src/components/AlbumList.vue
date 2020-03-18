@@ -16,6 +16,7 @@ import { pluralize } from "@/utils.js";
 import { mapState } from "vuex";
 
 // TODO: infinite scroll to the right
+// or link to view that contains more albums
 
 export default {
   name: "AlbumList",
@@ -28,8 +29,7 @@ export default {
     },
     ...mapState({
       albumCount: state => state.albums.count,
-      albums: state => state.albums.albums,
-      query: state => state.query,
+      albums: state => state.albums.albums
     })
   },
   methods: {

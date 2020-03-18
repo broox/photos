@@ -17,12 +17,16 @@ export default {
     Content
   },
   created() {
-    if (!this.$store.state.album) {
-      const album = this.$router.currentRoute.params.album;
+    const stateAlbum = this.$store.state.album;
+    const urlAlbum = this.$router.currentRoute.params.album;
+    if (!stateAlbum || stateAlbum != urlAlbum) {
+      // View was loaded via direct-link, or by navigating back/forward
+      // through history
+
       // todo: loading
       // todo: album not found
       // todo: move this to store actions?
-      return Album.get(album).then(data => {
+      return Album.get(urlAlbum).then(data => {
         if (data != null) {
           this.$store.dispatch("selectAlbum", data);
         }

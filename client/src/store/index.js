@@ -71,6 +71,7 @@ export default new Vuex.Store({
         title: album.title,
         path: { name: "Album", params: { album: album.slug } }
       });
+      dispatch('fetchAlbums');
       dispatch('fetchPhotos');
     },
     selectFeed({commit, dispatch}) {
@@ -79,6 +80,7 @@ export default new Vuex.Store({
         title: 'Broox Photos',
         path: { name: "Home" }
       });
+      dispatch('fetchAlbums');
       dispatch('fetchPhotos');
     },
     selectPage({commit}, {title, path}) {
