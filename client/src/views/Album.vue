@@ -9,6 +9,7 @@
 import Album from "@/models/album.js";
 import Header from "@/components/Header.vue";
 import Content from "@/components/Content.vue";
+import { serializeAlbum } from "@/utils.js";
 
 export default {
   name: "Album",
@@ -28,7 +29,7 @@ export default {
       // todo: move this to store actions?
       return Album.get(urlAlbum).then(data => {
         if (data != null) {
-          this.$store.dispatch("selectAlbum", data);
+          this.$store.dispatch("selectAlbum", serializeAlbum(data));
         }
       });
     }

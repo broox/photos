@@ -27,7 +27,13 @@ export default {
   },
   computed: {
     pageText() {
-      return this.album ? this.album.description : null;
+      if (!this.album) { return null; }
+
+      let text = this.album.description || '';
+      if (this.album.time) {
+        text += `<p class="meta">Posted ${this.album.time}</p>`;
+      }
+      return text;
     },
     ...mapState({
       album: state => state.album,
@@ -65,6 +71,12 @@ export default {
 
   .pageText {
     padding: 5px;
+
+    .meta {
+      font-size: 0.8em;
+      color: $secondaryTextColor;
+      margin: 0;
+    }
   }
 
   @media only screen and (min-width: 768px) {

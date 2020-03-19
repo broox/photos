@@ -40,7 +40,7 @@
 <script>
 import Album from "@/models/album.js";
 import Tag from "@/models/tag.js";
-import { isLargeViewport, pluralize, serializeTag } from "@/utils.js";
+import { isLargeViewport, pluralize, serializeAlbum, serializeTag } from "@/utils.js";
 
 const ALBUM = "album";
 const TAG = "tag";
@@ -190,7 +190,7 @@ export default {
           if (this.dropRealtimeResults || lastAlbumQuery !== query) {
             return;
           }
-          this.albums = data.data;
+          this.albums = data.data.map(serializeAlbum);
           this.albumCount = data.meta.count;
           // TODO: emit albums?
         })
