@@ -88,13 +88,10 @@ export function serializeForPhotoSwipe(photo) {
     src = photo.images.large;
   }
 
-  const tags = photo.tags;
-  let tagString = "";
-  if (tags) {
-    for (let i = 0; i < tags.length; i++) {
-      tagString += ' <a href="/tagged/'+tags[i].slug+'">#'+tags[i].name.replace(/\s/g, '')+'</a>';
-    }
-  }
+  const tagString = photo.tags.map(tag => {
+    tag = serializeTag(tag);
+    return `<a href="${tag.url}">${tag.hashtag}</a>`;
+  }).join(" ");
 
   const photoDate = photo.taken_at || photo.created_at;
   let time = null;
@@ -114,4 +111,10 @@ export function serializeForPhotoSwipe(photo) {
     thumbnail: thumbnail
   };
   // todo: album, camera, tags, etc
+}
+
+export function serializeTag(tag) {
+  tag.hashtag = '#'+tag.name.replace(/['.\s]/g, '');
+  tag.url = `/tagged/${tag.slug}`;
+  return tag;
 }

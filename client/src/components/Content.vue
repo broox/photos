@@ -3,6 +3,7 @@
     <div class="contentCover" v-show="showModal" v-on:click="hideModal()"></div>
     <div class="content">
       <div class="pageText" v-show="pageText" v-html="pageText"></div>
+      <TagList />
       <AlbumList />
       <Gallery />
     </div>
@@ -13,6 +14,7 @@
 import AlbumList from "@/components/AlbumList.vue";
 import Gallery from "@/components/Gallery.vue";
 import HeaderTitle from "@/components/HeaderTitle.vue";
+import TagList from "@/components/TagList.vue";
 import { mapState } from "vuex";
 
 export default {
@@ -20,7 +22,8 @@ export default {
   components: {
     AlbumList,
     Gallery,
-    HeaderTitle
+    HeaderTitle,
+    TagList
   },
   computed: {
     pageText() {

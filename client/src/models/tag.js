@@ -1,4 +1,4 @@
-import { buildQueryString } from "../utils.js";
+import { buildQueryString } from "@/utils.js";
 
 const baseURI = "/api/v1/tags";
 

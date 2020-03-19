@@ -3,6 +3,7 @@ import Vuex from "vuex";
 
 import albums from "@/store/albums";
 import photos from "@/store/photos";
+import tags from "@/store/tags";
 import router from "@/router";
 
 Vue.use(Vuex);
@@ -10,7 +11,8 @@ Vue.use(Vuex);
 export default new Vuex.Store({
   modules: {
     albums,
-    photos
+    photos,
+    tags
   },
   state: {
     album: null,
@@ -61,6 +63,7 @@ export default new Vuex.Store({
         title: query,
         path: { name: "Search", params: { query } } // FIXME: urlencode?
       });
+      dispatch('fetchTags');
       dispatch('fetchAlbums');
       dispatch('fetchPhotos');
     },
@@ -93,7 +96,7 @@ export default new Vuex.Store({
       commit('setLastPage', path);
     },
     selectTag({commit, dispatch}, tag) {
-      const title = `#${tag.name.replace(/\s/g, "")}`;
+      const title = tag.hashtag;
       commit('reset');
       commit('setTag', tag);
       dispatch('selectPage', {
