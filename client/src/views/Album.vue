@@ -20,7 +20,7 @@ export default {
   created() {
     const stateAlbum = this.$store.state.album;
     const urlAlbum = this.$router.currentRoute.params.album;
-    if (!stateAlbum || stateAlbum != urlAlbum) {
+    if (!stateAlbum || stateAlbum.slug != urlAlbum) {
       // View was loaded via direct-link, or by navigating back/forward
       // through history
 
