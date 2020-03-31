@@ -40,7 +40,7 @@
 
     h1 {
       display: inline-block;
-      font-size: 20px;
+      font-size: $titleFontSize;
       margin: 0;
       overflow: hidden;
       padding: 0 10px 0 0;

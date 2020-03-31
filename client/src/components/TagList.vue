@@ -61,15 +61,14 @@ ul.tags {
     padding: 5px;
     white-space: normal;
 
-    color: $primaryTextColor;
-    font-size: 14px;
     font-weight: 500;
     text-decoration: none;
   }
 
   a {
-    font-size: 16px;
+    font-size: $secondaryFontSize;
     color: $linkTextColor;
+    text-decoration: none;
   }
 
 }

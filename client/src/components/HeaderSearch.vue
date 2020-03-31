@@ -277,7 +277,7 @@ export default {
     background: #fff;
     border: none;
     color: $primaryTextColor;
-    font-size: 18px;
+    font-size: $primaryFontSize;
     height: 20px;
     margin: 4px 7px;
     outline: none;

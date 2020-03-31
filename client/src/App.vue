@@ -24,7 +24,7 @@
   body {
     color: $primaryTextColor;
     font-family: Helvetica, Arial, sans-serif;
-    font-size: 18px;
+    font-size: $primaryFontSize;
     margin: 0;
   }
 </style>
