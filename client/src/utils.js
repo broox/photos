@@ -76,7 +76,13 @@ export function relativeTime(datetime) {
 
 export function serializeAlbum(album) {
   album.url = `/${album.slug}`;
-  album.thumbnail = `https://derek.broox.com/square/${album.slug}/${album.thumbnail_id}/${album.slug}.jpg`;
+  if (album.cover_image) {
+    album.thumbnail = album.cover_image.small;
+  } else {
+    console.log('no cover image returned. get it');
+    // TODO: make an API request for the photo, the following is a hack that won't always work
+    album.thumbnail = `https://derek.broox.com/square/${album.slug}/${album.cover_image_id}/${album.slug}.jpg`;
+  }
   album.time = album.created_at ? relativeTime(Date.parse(album.created_at)) : null;
   return album;
 }
@@ -110,7 +116,7 @@ export function serializeForPhotoSwipe(photo) {
     tags: tagString,
     thumbnail: thumbnail
   };
-  // todo: album, camera, tags, etc
+  // todo: album, camera, etc
 }
 
 export function serializeTag(tag) {

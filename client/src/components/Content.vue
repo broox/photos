@@ -71,9 +71,10 @@ export default {
 
   .pageText {
     padding: 5px;
+    line-height: 1.3em;
 
     .meta {
-      font-size: 0.8em;
+      font-size: $secondaryFontSize;
       color: $secondaryTextColor;
       margin: 0;
     }

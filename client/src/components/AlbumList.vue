@@ -68,7 +68,7 @@ ul.albums {
     white-space: normal;
 
     color: $primaryTextColor;
-    font-size: 14px;
+    font-size: $secondaryFontSize;
     font-weight: 500;
     text-decoration: none;
     &:first-child {
@@ -79,6 +79,8 @@ ul.albums {
   img {
     border-radius: 10px;
     height: 150px;
+    object-fit: cover;
+    object-position: 50% 50%;
     width: 150px;
   }
 
@@ -88,7 +90,7 @@ ul.albums {
 
   i {
     color: $secondaryTextColor;
-    font-size: 12px;
+    font-size: $metaFontSize;
     font-style: normal;
   }
 }
