@@ -5,6 +5,7 @@ export default {
     state: {
       cache: {},
       limit: 40,
+      loadingPage: false,
       offset: 0,
       photoFilters: null,
       photos: [],
@@ -38,17 +39,18 @@ export default {
         state.offset = 0;
         state.totalPhotoCount = 0;
       },
+      setLoadingPage(state, loading) {
+        state.loadingPage = loading;
+      },
     },
     actions: {
-      fetchPhotos({commit, state, rootState}) {
+      async fetchPhotos({commit, state, rootState}) {
         commit('setLoading', true, { root: true });
         const params = {
           limit: state.limit,
           offset: state.offset
         };
         const filters = {};
-  
-        console.log('fetch photos', rootState);
 
         if (rootState.album) {
           filters["album_id"] = rootState.album.id;
@@ -61,7 +63,7 @@ export default {
         if (rootState.tag) {
           filters["tag"] = rootState.tag.slug;
         }
-  
+
         // Caching photoFilters is a hack to prevent a race condition
         commit('photoFilters', Object.assign({}, filters));
 
@@ -77,27 +79,32 @@ export default {
           return; // FIXME: this is not a promise...
         }
   
-        return Photo.fetchIndex(Object.assign(params, filters))
-          .then(data => {
-            if (JSON.stringify(filters) !== JSON.stringify(state.photoFilters)) {
-              // Hack to drop stale requests on the floor
-              return;
-            }
-            const photos = data.data;
-            const photoSwipePhotos = photos.map(serializeForPhotoSwipe);
-            commit('pushPhotos', { photos: photoSwipePhotos, count: data.meta.count });
-            commit('cachePhotos', cacheKey); // FIXME: cache only the first page of photos?
-            commit('setLoading', false, { root: true });
-          })
-          .catch(err => {
-            commit('setLoading', false, { root: true });
-            console.error("Error fetching photos.", err);
-          });
+        try {
+          const data = await Photo.fetchIndex(Object.assign(params, filters))
+          if (JSON.stringify(filters) !== JSON.stringify(state.photoFilters)) {
+            // Hack to drop stale requests on the floor
+            return;
+          }
+          const photos = data.data;
+          const photoSwipePhotos = photos.map(serializeForPhotoSwipe);
+          commit('pushPhotos', { photos: photoSwipePhotos, count: data.meta.count });
+          commit('cachePhotos', cacheKey); // FIXME: cache only the first page of photos?
+          commit('setLoading', false, { root: true });
+
+        } catch (error) {
+          commit('setLoading', false, { root: true });
+          console.error("Error fetching photos.", error);
+        }
       },
-      fetchMorePhotos({commit, dispatch, state}) {
+      async fetchMorePhotos({commit, dispatch, state}) {
+        if (state.loadingPage) return;
+
         commit('incrementOffset');
         if (state.offset >= state.totalPhotoCount) return;
-        dispatch('fetchPhotos');
+
+        commit('setLoadingPage', true);
+        await dispatch('fetchPhotos');
+        commit('setLoadingPage', false);
       },
       pushPhotos({commit}, photos) {
         commit('pushPhotos', photos);
