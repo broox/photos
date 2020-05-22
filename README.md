@@ -1,6 +1,6 @@
 # Broox Photos
 
-This is a simple photo gallery web application built to interact with my personal photos API.
+This is a simple (buggy and very much WIP) photo gallery web application built to interact with my personal photos API.
 
 The front-end is a single-page application built with [Vue](https://vuejs.org/), [FlexImages](https://github.com/Pixabay/JavaScript-flexImages), and [Photoswipe](https://github.com/dimsemenov/photoswipe).
 
