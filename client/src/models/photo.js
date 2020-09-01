@@ -16,5 +16,11 @@ export default {
       .then(response => {
         return response.json();
       })
+  },
+  fetchRandom() {
+    return fetch('/api/v1/photos/random')
+      .then(response => {
+        return response.json();
+      })
   }
 };

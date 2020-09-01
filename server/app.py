@@ -8,6 +8,8 @@ app = Flask(__name__,
             template_folder = 'dist/templates')
 
 API_HOST = 'https://api.broox.com/'
+# API_HOST = 'http://host.docker.internal:3000/'
+
 FLASK_ENV = os.environ.get('FLASK_ENV')
 PRODUCTION = 'production'
 VERIFY_SSL = FLASK_ENV == PRODUCTION

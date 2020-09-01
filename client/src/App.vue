@@ -13,7 +13,10 @@
 <script>
   // KILLME?
   export default {
-    name: "App"
+    name: "App",
+    updated() {
+      console.log('App.updated');
+    }
   }
 </script>
 

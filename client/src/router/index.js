@@ -4,6 +4,7 @@ import VueRouter from "vue-router";
 import Album from "../views/Album.vue";
 import Home from "../views/Home.vue";
 import NotFound from "../views/NotFound.vue";
+import Slideshow from "../views/Slideshow.vue";
 import Search from "../views/Search.vue";
 import Tag from "../views/Tag.vue";
 
@@ -14,6 +15,11 @@ const routes = [
     path: "/",
     name: "Home",
     component: Home
+  },
+  {
+    path: "/frame",
+    name: "Frame",
+    component: Slideshow
   },
   {
     path: "/search/:query",

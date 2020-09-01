@@ -68,6 +68,7 @@ export default new Vuex.Store({
       dispatch('fetchPhotos');
     },
     selectAlbum({commit, dispatch}, album) {
+      console.log('Store.selectAlbum');
       commit('reset');
       commit('setAlbum', album);
       dispatch('selectPage', {
@@ -78,6 +79,7 @@ export default new Vuex.Store({
       dispatch('fetchPhotos');
     },
     selectFeed({commit, dispatch}) {
+      console.log('Store.selectFeed');
       commit('reset');
       dispatch('selectPage', {
         title: 'Broox Photos',

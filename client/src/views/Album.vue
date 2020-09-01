@@ -17,6 +17,9 @@ export default {
     Header,
     Content
   },
+  beforeDestroy() {
+    console.log('Album.beforeDestroy()');
+  },
   created() {
     const stateAlbum = this.$store.state.album;
     const urlAlbum = this.$router.currentRoute.params.album;
@@ -24,7 +27,6 @@ export default {
       // View was loaded via direct-link, or by navigating back/forward
       // through history
 
-      // todo: loading
       // todo: album not found
       // todo: move this to store actions?
       return Album.get(urlAlbum).then(data => {

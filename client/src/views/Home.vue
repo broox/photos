@@ -16,6 +16,7 @@ export default {
     Content
   },
   created() {
+    console.log('Home.created');
     this.$store.dispatch('selectFeed');
   }
 };
